@@ -81,6 +81,7 @@ export default function Home() {
   const [pageSize] = useState(10)
   const [isLoading, setIsLoading] = useState(false)
   const [totalLeads, setTotalLeads] = useState(0)
+  const [importResults, setImportResults] = useState<string | null>(null)
 
   const fetchLeads = async () => {
     try {
@@ -212,20 +213,27 @@ export default function Home() {
         body: JSON.stringify({ leads: mappedData }),
       })
 
+      const result = await response.json()
+
       if (response.ok) {
+        setImportResults(result.message)
         await fetchLeads()
-        setIsImportModalOpen(false)
-        setIsPreviewMode(false)
-        setCsvPreviewData([])
-        setCsvColumns([])
-        setColumnMapping({ name: '', email: '', phone: '', source: '' })
-        setUseDefaultSource(false)
-        setDefaultSource('')
+        setTimeout(() => {
+          setIsImportModalOpen(false)
+          setIsPreviewMode(false)
+          setCsvPreviewData([])
+          setCsvColumns([])
+          setColumnMapping({ name: '', email: '', phone: '', source: '' })
+          setUseDefaultSource(false)
+          setDefaultSource('')
+          setImportResults(null)
+        }, 3000)
       } else {
-        console.error('Erro ao importar leads')
+        setImportResults(`Erro: ${result.error}`)
       }
     } catch (error) {
       console.error('Erro ao importar leads:', error)
+      setImportResults('Erro ao importar leads. Tente novamente.')
     }
   }
 
@@ -414,6 +422,15 @@ export default function Home() {
                           </div>
                         </div>
                       </div>
+                    </div>
+                  )}
+                  {importResults && (
+                    <div className={`p-4 mb-4 rounded-md ${
+                      importResults.startsWith('Erro') 
+                        ? 'bg-red-100 text-red-700' 
+                        : 'bg-green-100 text-green-700'
+                    }`}>
+                      {importResults}
                     </div>
                   )}
                   <div className="flex justify-end space-x-2">
