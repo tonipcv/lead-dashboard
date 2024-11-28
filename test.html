@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste de Webhook</title>
+</head>
+<body>
+    <h2>Teste de Envio de Lead</h2>
+    <button onclick="enviarLead()">Enviar Lead Teste</button>
+
+    <script>
+        function enviarLead() {
+            fetch('http://localhost:3000/api/webhook', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: "Carlos Teste",
+                    email: "carlos@teste.com",
+                    phone: "11977777777",
+                    source: "Teste Manual"
+                })
+            })
+            .then(response => response.json())
+            .then(data => alert('Lead enviado com sucesso!'))
+            .catch(error => alert('Erro ao enviar lead'));
+        }
+    </script>
+</body>
+</html> 
