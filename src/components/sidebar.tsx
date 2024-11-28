@@ -1,71 +1,64 @@
 "use client"
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { ThemeToggle } from "@/components/theme-toggle"
-import {
+import Image from 'next/image'
+import Link from 'next/link'
+import { ThemeToggle } from './theme-toggle'
+import { 
   LayoutDashboard,
-  MessageSquare,
-  Settings,
-  LayoutKanban,
-} from "lucide-react"
-
-const sidebarLinks = [
-  {
-    title: "Dashboard",
-    href: "/",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "WhatsApp",
-    href: "/whatsapp",
-    icon: MessageSquare,
-  },
-  {
-    title: "Configurações",
-    href: "/settings",
-    icon: Settings,
-  },
-  {
-    title: "CRM",
-    href: "/crm",
-    icon: LayoutKanban,
-  },
-]
+  ScrollText,
+  MessageSquare, 
+  Users
+} from 'lucide-react'
 
 export function Sidebar() {
-  const pathname = usePathname()
-
   return (
-    <div className="fixed left-0 h-full w-64 border-r bg-card p-6">
-      <div className="flex h-full flex-col justify-between">
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Lead Dashboard</h2>
-          </div>
-          <nav className="space-y-2">
-            {sidebarLinks.map((link) => {
-              const Icon = link.icon
-              return (
-                <Link key={link.href} href={link.href}>
-                  <Button
-                    variant={pathname === link.href ? "secondary" : "ghost"}
-                    className={cn(
-                      "w-full justify-start gap-2",
-                      pathname === link.href && "bg-muted"
-                    )}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {link.title}
-                  </Button>
-                </Link>
-              )
-            })}
-          </nav>
+    <div className="fixed left-0 top-0 h-full w-64 border-r bg-background p-4">
+      <div className="flex flex-col h-full">
+        <div className="mb-8">
+          <Image
+            src="/logo.png"
+            alt="Logo"
+            width={140}
+            height={40}
+            className="object-contain"
+          />
         </div>
-        <div className="flex items-center justify-between">
+
+        <nav className="space-y-2 flex-1">
+          <Link 
+            href="/dashboard" 
+            className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-accent"
+          >
+            <LayoutDashboard className="w-5 h-5" />
+            <span>Dashboard</span>
+          </Link>
+
+          <Link 
+            href="/" 
+            className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-accent"
+          >
+            <Users className="w-5 h-5" />
+            <span>Leads</span>
+          </Link>
+          
+          <Link 
+            href="/whatsapp" 
+            className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-accent"
+          >
+            <MessageSquare className="w-5 h-5" />
+            <span>WhatsApp</span>
+          </Link>
+
+          <Link 
+            href="/crm" 
+            className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-accent"
+          >
+            <ScrollText className="w-5 h-5" />
+            <span>CRM</span>
+          </Link>
+        </nav>
+
+        <div className="pt-4 border-t">
           <ThemeToggle />
         </div>
       </div>

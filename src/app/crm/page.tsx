@@ -37,6 +37,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
+type LeadStatus = 'Base' | 'Negócio' | 'Fechado'
+
 type Lead = {
   id: number
   name: string
@@ -44,11 +46,11 @@ type Lead = {
   phone: string
   source: string
   createdAt: string
-  status: 'Base' | 'Negócio' | 'Fechado'
+  status: LeadStatus
 }
 
 type Column = {
-  id: string
+  id: LeadStatus
   title: string
   leads: Lead[]
 }
@@ -138,25 +140,27 @@ export default function CRM() {
         },
         body: JSON.stringify({
           ...lead,
-          status: overColumn
+          status: overColumn as LeadStatus
         }),
       })
 
-      setColumns(columns.map(col => {
-        if (col.id === activeColumn) {
-          return {
-            ...col,
-            leads: col.leads.filter(l => l.id !== lead.id)
+      setColumns(prevColumns => 
+        prevColumns.map(col => {
+          if (col.id === activeColumn) {
+            return {
+              ...col,
+              leads: col.leads.filter(l => l.id !== lead.id)
+            }
           }
-        }
-        if (col.id === overColumn) {
-          return {
-            ...col,
-            leads: [...col.leads, { ...lead, status: overColumn }]
+          if (col.id === overColumn) {
+            return {
+              ...col,
+              leads: [...col.leads, { ...lead, status: overColumn as LeadStatus }]
+            }
           }
-        }
-        return col
-      }))
+          return col
+        })
+      )
     } catch (error) {
       console.error('Erro ao atualizar lead:', error)
     }

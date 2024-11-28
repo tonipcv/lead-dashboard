@@ -1,130 +1,98 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import * as QRCode from 'qrcode'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { MessageSquare, Phone, RefreshCw } from 'lucide-react'
 
-export default function WhatsAppPage() {
-  const [status, setStatus] = useState<string>('disconnected')
+export default function WhatsApp() {
+  const [status, setStatus] = useState<'connected' | 'disconnected' | 'loading'>('loading')
   const [qrCode, setQrCode] = useState<string | null>(null)
-  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const initializeWhatsApp = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const response = await fetch('/api/whatsapp/init', { method: 'POST' })
-      if (!response.ok) {
-        throw new Error('Falha ao inicializar WhatsApp')
-      }
-      checkQRCode()
-    } catch (error) {
-      console.error('Erro ao inicializar WhatsApp:', error)
-      setError('Falha ao inicializar WhatsApp. Tente novamente.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const checkQRCode = async () => {
-    try {
-      const response = await fetch('/api/whatsapp/qrcode')
-      const data = await response.json()
-      console.log('QR Code response:', data)
-      setQrCode(data.qrCode)
-      if (data.qrCode) {
-        const dataUrl = await QRCode.toDataURL(data.qrCode, {
-          width: 256,
-          margin: 1,
-          color: {
-            dark: '#000000',
-            light: '#ffffff'
-          }
-        })
-        setQrCodeDataUrl(dataUrl)
-      }
-    } catch (error) {
-      console.error('Erro ao buscar QR code:', error)
-      setError('Falha ao buscar QR code')
-    }
-  }
 
   const checkStatus = async () => {
     try {
       const response = await fetch('/api/whatsapp/status')
+      if (!response.ok) throw new Error('Erro ao verificar status')
+      
       const data = await response.json()
       setStatus(data.status)
+      setQrCode(data.qrCode)
     } catch (error) {
       console.error('Erro ao verificar status:', error)
+      setStatus('disconnected')
     }
   }
 
   useEffect(() => {
     checkStatus()
-    
-    const interval = setInterval(() => {
-      checkStatus()
-      if (status === 'disconnected') {
-        checkQRCode()
-      }
-    }, 5000)
-
+    // Verificar status a cada 30 segundos
+    const interval = setInterval(checkStatus, 30000)
     return () => clearInterval(interval)
-  }, [status])
+  }, [])
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-2xl mx-auto py-16 px-4">
-        <div className="bg-white shadow rounded-lg p-6">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-8 text-center">
-            Conexão WhatsApp
-          </h1>
-          
-          <div className="flex flex-col items-center space-y-6">
-            <div className="text-gray-700">
-              Status: <span className="font-medium">{status}</span>
+    <div className="p-4 md:p-8 space-y-4">
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-xl flex items-center gap-2">
+              <MessageSquare className="w-6 h-6" />
+              WhatsApp
+            </CardTitle>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={checkStatus}
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Atualizar Status
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <div className={`w-3 h-3 rounded-full ${
+                status === 'connected' ? 'bg-green-500' :
+                status === 'disconnected' ? 'bg-red-500' :
+                'bg-yellow-500 animate-pulse'
+              }`} />
+              <span className="font-medium">
+                {status === 'connected' ? 'Conectado' :
+                 status === 'disconnected' ? 'Desconectado' :
+                 'Verificando...'}
+              </span>
             </div>
 
-            {error && (
-              <div className="bg-red-50 text-red-700 p-4 rounded-md">
-                {error}
-              </div>
-            )}
-
-            {status === 'disconnected' && !loading && (
-              <button
-                onClick={initializeWhatsApp}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                disabled={loading}
-              >
-                {loading ? 'Conectando...' : 'Conectar WhatsApp'}
-              </button>
-            )}
-
-            {loading && (
-              <div className="text-gray-500">
-                Inicializando WhatsApp...
-              </div>
-            )}
-
-            {qrCode && status === 'disconnected' && qrCodeDataUrl && (
-              <div className="p-4 bg-white border rounded-lg shadow-sm">
-                <img 
-                  src={qrCodeDataUrl} 
-                  alt="QR Code" 
-                  width={256} 
-                  height={256}
-                  className="w-64 h-64"
-                />
-                <p className="mt-4 text-sm text-gray-500 text-center">
-                  Escaneie o QR Code com seu WhatsApp
+            {status === 'connected' && (
+              <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+                <p className="text-green-700 dark:text-green-300 flex items-center gap-2">
+                  <Phone className="w-4 h-4" />
+                  WhatsApp está pronto para uso
                 </p>
               </div>
             )}
+
+            {status === 'disconnected' && (
+              <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">
+                <p className="text-red-700 dark:text-red-300">
+                  WhatsApp não está conectado. Por favor, escaneie o QR Code quando disponível.
+                </p>
+              </div>
+            )}
+
+            {qrCode && (
+              <div className="flex justify-center p-4 bg-white rounded-lg">
+                <img 
+                  src={qrCode} 
+                  alt="QR Code para conexão do WhatsApp" 
+                  className="w-64 h-64"
+                />
+              </div>
+            )}
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   )
 } 

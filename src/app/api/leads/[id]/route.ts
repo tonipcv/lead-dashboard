@@ -1,6 +1,29 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+export async function DELETE(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const id = parseInt(params.id)
+
+    await prisma.lead.delete({
+      where: {
+        id: id,
+      },
+    })
+
+    return NextResponse.json({ message: 'Lead excluído com sucesso' })
+  } catch (error) {
+    console.error('Erro ao excluir lead:', error)
+    return NextResponse.json(
+      { error: 'Erro ao excluir lead' },
+      { status: 500 }
+    )
+  }
+}
+
 export async function PUT(
   request: Request,
   { params }: { params: { id: string } }
@@ -8,26 +31,20 @@ export async function PUT(
   try {
     const id = parseInt(params.id)
     const body = await request.json()
-    const { name, email, phone, source } = body
 
-    if (!name || !email || !phone || !source) {
-      return NextResponse.json(
-        { error: 'Todos os campos são obrigatórios' },
-        { status: 400 }
-      )
-    }
-
-    const lead = await prisma.lead.update({
-      where: { id },
+    const updatedLead = await prisma.lead.update({
+      where: {
+        id: id,
+      },
       data: {
-        name,
-        email,
-        phone,
-        source
-      }
+        name: body.name,
+        email: body.email,
+        phone: body.phone,
+        source: body.source,
+      },
     })
 
-    return NextResponse.json(lead)
+    return NextResponse.json(updatedLead)
   } catch (error) {
     console.error('Erro ao atualizar lead:', error)
     return NextResponse.json(

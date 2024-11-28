@@ -32,10 +32,12 @@ import {
   Globe,
   Calendar,
   Search,
-  Upload
+  Upload,
+  Trash2
 } from 'lucide-react'
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Badge } from "@/components/ui/badge"
+import Image from 'next/image'
 
 type Lead = {
   id: number
@@ -238,6 +240,24 @@ export default function Home() {
     }
   }
 
+  const handleDelete = async (leadId: number) => {
+    if (!confirm('Tem certeza que deseja excluir este lead?')) return;
+
+    try {
+      const response = await fetch(`/api/leads/${leadId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        await fetchLeads();
+      } else {
+        console.error('Erro ao excluir lead');
+      }
+    } catch (error) {
+      console.error('Erro ao excluir lead:', error);
+    }
+  };
+
   const filteredLeads = leads.filter((lead) =>
     lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     lead.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -285,12 +305,6 @@ export default function Home() {
       <div className="rounded-lg border bg-card">
         <div className="p-4 md:p-6 border-b">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-center space-x-2">
-              <MessageSquare className="w-6 h-6" />
-              <h2 className="text-xl md:text-2xl font-semibold">
-                Dashboard de Leads
-              </h2>
-            </div>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <div className="relative w-full sm:w-64">
                 <Input
@@ -648,6 +662,14 @@ export default function Home() {
                       <div className="flex space-x-2">
                         <Button variant="ghost" size="sm" onClick={handleSave}>
                           <Save className="w-4 h-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleDelete(lead.id)}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-100"
+                        >
+                          <Trash2 className="w-4 h-4" />
                         </Button>
                         <Button variant="ghost" size="sm" onClick={handleCancel}>
                           <X className="w-4 h-4" />
