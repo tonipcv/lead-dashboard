@@ -35,6 +35,7 @@ import {
   Upload
 } from 'lucide-react'
 import { ThemeToggle } from "@/components/theme-toggle"
+import { Badge } from "@/components/ui/badge"
 
 type Lead = {
   id: number
@@ -435,8 +436,8 @@ export default function Home() {
                                       <TableCell>{columnMapping.phone ? row[columnMapping.phone] : '-'}</TableCell>
                                       <TableCell>
                                         {useDefaultSource 
-                                          ? defaultSource 
-                                          : (columnMapping.source ? row[columnMapping.source] : '-')}
+                                          ? <Badge variant="secondary" className="font-normal">{defaultSource}</Badge>
+                                          : (columnMapping.source ? <Badge variant="secondary" className="font-normal">{row[columnMapping.source]}</Badge> : '-')}
                                       </TableCell>
                                     </TableRow>
                                   ))}
@@ -626,14 +627,17 @@ export default function Home() {
                       lead.phone
                     )}
                   </TableCell>
-                  <TableCell className="max-w-[200px] truncate">
+                  <TableCell className="max-w-[200px]">
                     {isEditing && editingLead?.id === lead.id ? (
                       <Input
                         value={editingLead.source}
                         onChange={(e) => setEditingLead({ ...editingLead, source: e.target.value })}
+                        placeholder="Digite a origem e pressione Enter"
                       />
                     ) : (
-                      lead.source
+                      <Badge variant="secondary" className="font-normal">
+                        {lead.source}
+                      </Badge>
                     )}
                   </TableCell>
                   <TableCell>

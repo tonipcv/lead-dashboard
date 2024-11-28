@@ -12,10 +12,9 @@ import {
 import { 
   Menu,
   Home,
-  MessageSquare,
-  Users,
   Settings,
   BarChart2,
+  Link2,
   X 
 } from 'lucide-react'
 import { cn } from "@/lib/utils"
@@ -33,25 +32,23 @@ const routes = [
     icon: BarChart2
   },
   {
-    href: '/leads',
-    label: 'Leads',
-    icon: Users
-  },
-  {
-    href: '/crm',
-    label: 'CRM',
-    icon: MessageSquare
-  },
-  {
     href: '/settings',
     label: 'Configurações',
-    icon: Settings
+    icon: Settings,
+    children: [
+      {
+        href: '/settings/webhooks',
+        label: 'Webhooks',
+        icon: Link2
+      }
+    ]
   }
 ]
 
 export function NavMenu() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
+  const [openSettings, setOpenSettings] = useState(false)
 
   return (
     <>
@@ -65,6 +62,42 @@ export function NavMenu() {
             <nav className="flex-1 px-4 space-y-1">
               {routes.map((route) => {
                 const Icon = route.icon
+                if (route.children) {
+                  return (
+                    <div key={route.href}>
+                      <button
+                        onClick={() => setOpenSettings(!openSettings)}
+                        className={cn(
+                          "flex items-center gap-x-2 w-full text-sm font-medium px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors",
+                          pathname.startsWith(route.href) && "bg-accent text-accent-foreground"
+                        )}
+                      >
+                        <Icon className="w-5 h-5" />
+                        {route.label}
+                      </button>
+                      {openSettings && (
+                        <div className="ml-4 mt-1 space-y-1">
+                          {route.children.map((child) => {
+                            const ChildIcon = child.icon
+                            return (
+                              <Link
+                                key={child.href}
+                                href={child.href}
+                                className={cn(
+                                  "flex items-center gap-x-2 text-sm font-medium px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors",
+                                  pathname === child.href && "bg-accent text-accent-foreground"
+                                )}
+                              >
+                                <ChildIcon className="w-4 h-4" />
+                                {child.label}
+                              </Link>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )
+                }
                 return (
                   <Link 
                     key={route.href} 
@@ -103,6 +136,43 @@ export function NavMenu() {
                 <nav className="flex flex-col gap-4 mt-4">
                   {routes.map((route) => {
                     const Icon = route.icon
+                    if (route.children) {
+                      return (
+                        <div key={route.href} className="space-y-2">
+                          <button
+                            onClick={() => setOpenSettings(!openSettings)}
+                            className={cn(
+                              "flex items-center gap-x-2 w-full text-sm font-medium p-3 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors",
+                              pathname.startsWith(route.href) && "bg-accent text-accent-foreground"
+                            )}
+                          >
+                            <Icon className="w-5 h-5" />
+                            {route.label}
+                          </button>
+                          {openSettings && (
+                            <div className="ml-4 space-y-2">
+                              {route.children.map((child) => {
+                                const ChildIcon = child.icon
+                                return (
+                                  <Link
+                                    key={child.href}
+                                    href={child.href}
+                                    onClick={() => setOpen(false)}
+                                    className={cn(
+                                      "flex items-center gap-x-2 text-sm font-medium p-3 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors",
+                                      pathname === child.href && "bg-accent text-accent-foreground"
+                                    )}
+                                  >
+                                    <ChildIcon className="w-4 h-4" />
+                                    {child.label}
+                                  </Link>
+                                )
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    }
                     return (
                       <Link 
                         key={route.href} 
