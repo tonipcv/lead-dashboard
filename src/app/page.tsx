@@ -252,19 +252,46 @@ export default function Home() {
     fetchLeads()
   }, [currentPage])
 
+  const getPaginationRange = (currentPage: number, totalPages: number) => {
+    const delta = 2; // Número de páginas para mostrar antes e depois da página atual
+    const range: number[] = [];
+    const rangeWithDots: (number | string)[] = [];
+    let l: number;
+
+    for (let i = 1; i <= totalPages; i++) {
+      if (i === 1 || i === totalPages || (i >= currentPage - delta && i <= currentPage + delta)) {
+        range.push(i);
+      }
+    }
+
+    for (let i of range) {
+      if (l) {
+        if (i - l === 2) {
+          rangeWithDots.push(l + 1);
+        } else if (i - l !== 1) {
+          rangeWithDots.push('...');
+        }
+      }
+      rangeWithDots.push(i);
+      l = i;
+    }
+
+    return rangeWithDots;
+  };
+
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="rounded-lg border bg-card">
-        <div className="p-6 border-b">
-          <div className="flex items-center justify-between">
+        <div className="p-4 md:p-6 border-b">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center space-x-2">
               <MessageSquare className="w-6 h-6" />
-              <h2 className="text-2xl font-semibold">
+              <h2 className="text-xl md:text-2xl font-semibold">
                 Dashboard de Leads
               </h2>
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="relative w-64">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="relative w-full sm:w-64">
                 <Input
                   placeholder="Buscar leads..."
                   value={searchTerm}
@@ -273,290 +300,302 @@ export default function Home() {
                 />
                 <Search className="w-4 h-4 absolute left-2.5 top-2.5 text-muted-foreground" />
               </div>
-              <Dialog open={isImportModalOpen} onOpenChange={setIsImportModalOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" className="flex items-center space-x-2">
-                    <Upload className="w-4 h-4" />
-                    <span>Importar CSV</span>
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-4xl">
-                  <DialogHeader>
-                    <DialogTitle>Importar Leads via CSV</DialogTitle>
-                  </DialogHeader>
-                  {!isPreviewMode ? (
+              <div className="flex items-center gap-2">
+                <Dialog open={isImportModalOpen} onOpenChange={setIsImportModalOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="flex-1 sm:flex-none">
+                      <Upload className="w-4 h-4 mr-2" />
+                      <span>Importar CSV</span>
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-4xl">
+                    <DialogHeader>
+                      <DialogTitle>Importar Leads via CSV</DialogTitle>
+                    </DialogHeader>
+                    {!isPreviewMode ? (
+                      <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="csvFile">Arquivo CSV</Label>
+                          <Input
+                            id="csvFile"
+                            type="file"
+                            accept=".csv"
+                            onChange={handleCsvImport}
+                          />
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          <p>O arquivo CSV deve conter colunas que possam ser mapeadas para:</p>
+                          <ul className="list-disc list-inside mt-2">
+                            <li>Nome do Lead</li>
+                            <li>Email do Lead</li>
+                            <li>Telefone do Lead</li>
+                            <li>Origem do Lead</li>
+                          </ul>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-4">
+                            <div className="text-sm font-medium">Mapeamento de Colunas</div>
+                            <div className="grid gap-3">
+                              <div className="grid gap-2">
+                                <Label>Nome do Lead</Label>
+                                <select
+                                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1"
+                                  value={columnMapping.name}
+                                  onChange={(e) => setColumnMapping({ ...columnMapping, name: e.target.value })}
+                                >
+                                  <option value="">Selecione a coluna</option>
+                                  {csvColumns.map((column) => (
+                                    <option key={column} value={column}>{column}</option>
+                                  ))}
+                                </select>
+                              </div>
+                              <div className="grid gap-2">
+                                <Label>Email do Lead</Label>
+                                <select
+                                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1"
+                                  value={columnMapping.email}
+                                  onChange={(e) => setColumnMapping({ ...columnMapping, email: e.target.value })}
+                                >
+                                  <option value="">Selecione a coluna</option>
+                                  {csvColumns.map((column) => (
+                                    <option key={column} value={column}>{column}</option>
+                                  ))}
+                                </select>
+                              </div>
+                              <div className="grid gap-2">
+                                <Label>Telefone do Lead</Label>
+                                <select
+                                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1"
+                                  value={columnMapping.phone}
+                                  onChange={(e) => setColumnMapping({ ...columnMapping, phone: e.target.value })}
+                                >
+                                  <option value="">Selecione a coluna</option>
+                                  {csvColumns.map((column) => (
+                                    <option key={column} value={column}>{column}</option>
+                                  ))}
+                                </select>
+                              </div>
+                              <div className="grid gap-2">
+                                <Label>Origem do Lead</Label>
+                                <div className="space-y-4">
+                                  <div className="flex items-center space-x-2">
+                                    <input
+                                      type="checkbox"
+                                      id="useDefaultSource"
+                                      checked={useDefaultSource}
+                                      onChange={(e) => setUseDefaultSource(e.target.checked)}
+                                      className="rounded border-gray-300"
+                                    />
+                                    <Label htmlFor="useDefaultSource">Usar origem padrão para todos</Label>
+                                  </div>
+                                  {useDefaultSource ? (
+                                    <Input
+                                      placeholder="Digite a origem padrão"
+                                      value={defaultSource}
+                                      onChange={(e) => setDefaultSource(e.target.value)}
+                                    />
+                                  ) : (
+                                    <select
+                                      className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1"
+                                      value={columnMapping.source}
+                                      onChange={(e) => setColumnMapping({ ...columnMapping, source: e.target.value })}
+                                    >
+                                      <option value="">Selecione a coluna</option>
+                                      {csvColumns.map((column) => (
+                                        <option key={column} value={column}>{column}</option>
+                                      ))}
+                                    </select>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="space-y-4">
+                            <div className="text-sm font-medium">
+                              Preview dos dados ({csvPreviewData.length} registros):
+                            </div>
+                            <div className="max-h-[400px] overflow-auto">
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead>Nome</TableHead>
+                                    <TableHead>Email</TableHead>
+                                    <TableHead>Telefone</TableHead>
+                                    <TableHead>Origem</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {csvPreviewData.slice(0, 5).map((row, index) => (
+                                    <TableRow key={index}>
+                                      <TableCell>{columnMapping.name ? row[columnMapping.name] : '-'}</TableCell>
+                                      <TableCell>{columnMapping.email ? row[columnMapping.email] : '-'}</TableCell>
+                                      <TableCell>{columnMapping.phone ? row[columnMapping.phone] : '-'}</TableCell>
+                                      <TableCell>
+                                        {useDefaultSource 
+                                          ? defaultSource 
+                                          : (columnMapping.source ? row[columnMapping.source] : '-')}
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                              {csvPreviewData.length > 5 && (
+                                <div className="text-sm text-muted-foreground mt-2 text-center">
+                                  Mostrando 5 de {csvPreviewData.length} registros
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {importResults && (
+                      <div className={`p-4 mb-4 rounded-md ${
+                        importResults.startsWith('Erro') 
+                          ? 'bg-red-100 text-red-700' 
+                          : 'bg-green-100 text-green-700'
+                      }`}>
+                        {importResults}
+                      </div>
+                    )}
+                    <div className="flex justify-end space-x-2">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => {
+                          setIsImportModalOpen(false)
+                          setIsPreviewMode(false)
+                          setCsvPreviewData([])
+                          setCsvColumns([])
+                          setColumnMapping({ name: '', email: '', phone: '', source: '' })
+                          setUseDefaultSource(false)
+                          setDefaultSource('')
+                        }}
+                      >
+                        <X className="w-4 h-4 mr-2" />
+                        Cancelar
+                      </Button>
+                      {isPreviewMode && (
+                        <Button 
+                          onClick={handleConfirmImport}
+                          disabled={
+                            !columnMapping.name || 
+                            !columnMapping.email || 
+                            !columnMapping.phone || 
+                            (!useDefaultSource && !columnMapping.source) ||
+                            (useDefaultSource && !defaultSource)
+                          }
+                        >
+                          <Save className="w-4 h-4 mr-2" />
+                          Confirmar Importação
+                        </Button>
+                      )}
+                    </div>
+                  </DialogContent>
+                </Dialog>
+                <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="flex-1 sm:flex-none">
+                      <Plus className="w-4 h-4 mr-2" />
+                      <span>Adicionar Lead</span>
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Adicionar Novo Lead</DialogTitle>
+                    </DialogHeader>
                     <div className="grid gap-4 py-4">
                       <div className="grid gap-2">
-                        <Label htmlFor="csvFile">Arquivo CSV</Label>
+                        <Label htmlFor="name" className="flex items-center space-x-2">
+                          <User className="w-4 h-4" />
+                          <span>Nome</span>
+                        </Label>
                         <Input
-                          id="csvFile"
-                          type="file"
-                          accept=".csv"
-                          onChange={handleCsvImport}
+                          id="name"
+                          value={newLead.name}
+                          onChange={(e) => setNewLead({ ...newLead, name: e.target.value })}
                         />
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        <p>O arquivo CSV deve conter colunas que possam ser mapeadas para:</p>
-                        <ul className="list-disc list-inside mt-2">
-                          <li>Nome do Lead</li>
-                          <li>Email do Lead</li>
-                          <li>Telefone do Lead</li>
-                          <li>Origem do Lead</li>
-                        </ul>
+                      <div className="grid gap-2">
+                        <Label htmlFor="email" className="flex items-center space-x-2">
+                          <Mail className="w-4 h-4" />
+                          <span>Email</span>
+                        </Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={newLead.email}
+                          onChange={(e) => setNewLead({ ...newLead, email: e.target.value })}
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="phone" className="flex items-center space-x-2">
+                          <Phone className="w-4 h-4" />
+                          <span>Telefone</span>
+                        </Label>
+                        <Input
+                          id="phone"
+                          value={newLead.phone}
+                          onChange={(e) => setNewLead({ ...newLead, phone: e.target.value })}
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="source" className="flex items-center space-x-2">
+                          <Globe className="w-4 h-4" />
+                          <span>Origem</span>
+                        </Label>
+                        <Input
+                          id="source"
+                          value={newLead.source}
+                          onChange={(e) => setNewLead({ ...newLead, source: e.target.value })}
+                        />
                       </div>
                     </div>
-                  ) : (
-                    <div className="grid gap-4 py-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-4">
-                          <div className="text-sm font-medium">Mapeamento de Colunas</div>
-                          <div className="grid gap-3">
-                            <div className="grid gap-2">
-                              <Label>Nome do Lead</Label>
-                              <select
-                                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1"
-                                value={columnMapping.name}
-                                onChange={(e) => setColumnMapping({ ...columnMapping, name: e.target.value })}
-                              >
-                                <option value="">Selecione a coluna</option>
-                                {csvColumns.map((column) => (
-                                  <option key={column} value={column}>{column}</option>
-                                ))}
-                              </select>
-                            </div>
-                            <div className="grid gap-2">
-                              <Label>Email do Lead</Label>
-                              <select
-                                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1"
-                                value={columnMapping.email}
-                                onChange={(e) => setColumnMapping({ ...columnMapping, email: e.target.value })}
-                              >
-                                <option value="">Selecione a coluna</option>
-                                {csvColumns.map((column) => (
-                                  <option key={column} value={column}>{column}</option>
-                                ))}
-                              </select>
-                            </div>
-                            <div className="grid gap-2">
-                              <Label>Telefone do Lead</Label>
-                              <select
-                                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1"
-                                value={columnMapping.phone}
-                                onChange={(e) => setColumnMapping({ ...columnMapping, phone: e.target.value })}
-                              >
-                                <option value="">Selecione a coluna</option>
-                                {csvColumns.map((column) => (
-                                  <option key={column} value={column}>{column}</option>
-                                ))}
-                              </select>
-                            </div>
-                            <div className="grid gap-2">
-                              <Label>Origem do Lead</Label>
-                              <div className="space-y-4">
-                                <div className="flex items-center space-x-2">
-                                  <input
-                                    type="checkbox"
-                                    id="useDefaultSource"
-                                    checked={useDefaultSource}
-                                    onChange={(e) => setUseDefaultSource(e.target.checked)}
-                                    className="rounded border-gray-300"
-                                  />
-                                  <Label htmlFor="useDefaultSource">Usar origem padrão para todos</Label>
-                                </div>
-                                {useDefaultSource ? (
-                                  <Input
-                                    placeholder="Digite a origem padrão"
-                                    value={defaultSource}
-                                    onChange={(e) => setDefaultSource(e.target.value)}
-                                  />
-                                ) : (
-                                  <select
-                                    className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1"
-                                    value={columnMapping.source}
-                                    onChange={(e) => setColumnMapping({ ...columnMapping, source: e.target.value })}
-                                  >
-                                    <option value="">Selecione a coluna</option>
-                                    {csvColumns.map((column) => (
-                                      <option key={column} value={column}>{column}</option>
-                                    ))}
-                                  </select>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="space-y-4">
-                          <div className="text-sm font-medium">
-                            Preview dos dados ({csvPreviewData.length} registros):
-                          </div>
-                          <div className="max-h-[400px] overflow-auto">
-                            <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead>Nome</TableHead>
-                                  <TableHead>Email</TableHead>
-                                  <TableHead>Telefone</TableHead>
-                                  <TableHead>Origem</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {csvPreviewData.slice(0, 5).map((row, index) => (
-                                  <TableRow key={index}>
-                                    <TableCell>{columnMapping.name ? row[columnMapping.name] : '-'}</TableCell>
-                                    <TableCell>{columnMapping.email ? row[columnMapping.email] : '-'}</TableCell>
-                                    <TableCell>{columnMapping.phone ? row[columnMapping.phone] : '-'}</TableCell>
-                                    <TableCell>
-                                      {useDefaultSource 
-                                        ? defaultSource 
-                                        : (columnMapping.source ? row[columnMapping.source] : '-')}
-                                    </TableCell>
-                                  </TableRow>
-                                ))}
-                              </TableBody>
-                            </Table>
-                            {csvPreviewData.length > 5 && (
-                              <div className="text-sm text-muted-foreground mt-2 text-center">
-                                Mostrando 5 de {csvPreviewData.length} registros
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {importResults && (
-                    <div className={`p-4 mb-4 rounded-md ${
-                      importResults.startsWith('Erro') 
-                        ? 'bg-red-100 text-red-700' 
-                        : 'bg-green-100 text-green-700'
-                    }`}>
-                      {importResults}
-                    </div>
-                  )}
-                  <div className="flex justify-end space-x-2">
-                    <Button 
-                      variant="outline" 
-                      onClick={() => {
-                        setIsImportModalOpen(false)
-                        setIsPreviewMode(false)
-                        setCsvPreviewData([])
-                        setCsvColumns([])
-                        setColumnMapping({ name: '', email: '', phone: '', source: '' })
-                        setUseDefaultSource(false)
-                        setDefaultSource('')
-                      }}
-                    >
-                      <X className="w-4 h-4 mr-2" />
-                      Cancelar
-                    </Button>
-                    {isPreviewMode && (
-                      <Button 
-                        onClick={handleConfirmImport}
-                        disabled={
-                          !columnMapping.name || 
-                          !columnMapping.email || 
-                          !columnMapping.phone || 
-                          (!useDefaultSource && !columnMapping.source) ||
-                          (useDefaultSource && !defaultSource)
-                        }
-                      >
-                        <Save className="w-4 h-4 mr-2" />
-                        Confirmar Importação
+                    <div className="flex justify-end space-x-2">
+                      <Button variant="outline" onClick={() => setIsModalOpen(false)}>
+                        <X className="w-4 h-4 mr-2" />
+                        Cancelar
                       </Button>
-                    )}
-                  </div>
-                </DialogContent>
-              </Dialog>
-              <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                <DialogTrigger asChild>
-                  <Button className="flex items-center space-x-2">
-                    <Plus className="w-4 h-4" />
-                    <span>Adicionar Lead</span>
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Adicionar Novo Lead</DialogTitle>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="name" className="flex items-center space-x-2">
-                        <User className="w-4 h-4" />
-                        <span>Nome</span>
-                      </Label>
-                      <Input
-                        id="name"
-                        value={newLead.name}
-                        onChange={(e) => setNewLead({ ...newLead, name: e.target.value })}
-                      />
+                      <Button onClick={handleCreate}>
+                        <Save className="w-4 h-4 mr-2" />
+                        Salvar
+                      </Button>
                     </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="email" className="flex items-center space-x-2">
-                        <Mail className="w-4 h-4" />
-                        <span>Email</span>
-                      </Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={newLead.email}
-                        onChange={(e) => setNewLead({ ...newLead, email: e.target.value })}
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="phone" className="flex items-center space-x-2">
-                        <Phone className="w-4 h-4" />
-                        <span>Telefone</span>
-                      </Label>
-                      <Input
-                        id="phone"
-                        value={newLead.phone}
-                        onChange={(e) => setNewLead({ ...newLead, phone: e.target.value })}
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="source" className="flex items-center space-x-2">
-                        <Globe className="w-4 h-4" />
-                        <span>Origem</span>
-                      </Label>
-                      <Input
-                        id="source"
-                        value={newLead.source}
-                        onChange={(e) => setNewLead({ ...newLead, source: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                  <div className="flex justify-end space-x-2">
-                    <Button variant="outline" onClick={() => setIsModalOpen(false)}>
-                      <X className="w-4 h-4 mr-2" />
-                      Cancelar
-                    </Button>
-                    <Button onClick={handleCreate}>
-                      <Save className="w-4 h-4 mr-2" />
-                      Salvar
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </div>
           </div>
         </div>
         
-        <div className="p-0">
+        <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead><User className="w-4 h-4 mr-2 inline" />Nome</TableHead>
-                <TableHead><Mail className="w-4 h-4 mr-2 inline" />Email</TableHead>
-                <TableHead><Phone className="w-4 h-4 mr-2 inline" />Telefone</TableHead>
-                <TableHead><Globe className="w-4 h-4 mr-2 inline" />Origem</TableHead>
-                <TableHead><Calendar className="w-4 h-4 mr-2 inline" />Data</TableHead>
-                <TableHead>Ações</TableHead>
+                <TableHead className="whitespace-nowrap w-[30%]">
+                  <User className="w-4 h-4 mr-2 inline" />Nome
+                </TableHead>
+                <TableHead className="whitespace-nowrap w-[30%]">
+                  <Mail className="w-4 h-4 mr-2 inline" />Email
+                </TableHead>
+                <TableHead className="whitespace-nowrap w-[15%]">
+                  <Phone className="w-4 h-4 mr-2 inline" />Telefone
+                </TableHead>
+                <TableHead className="whitespace-nowrap w-[15%]">
+                  <Globe className="w-4 h-4 mr-2 inline" />Origem
+                </TableHead>
+                <TableHead className="whitespace-nowrap w-[10%]">
+                  <Calendar className="w-4 h-4 mr-2 inline" />Data
+                </TableHead>
+                <TableHead className="w-[80px] text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredLeads.map((lead) => (
                 <TableRow key={lead.id}>
-                  <TableCell>
+                  <TableCell className="font-medium max-w-[200px] truncate">
                     {isEditing && editingLead?.id === lead.id ? (
                       <Input
                         value={editingLead.name}
@@ -566,7 +605,7 @@ export default function Home() {
                       lead.name
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="max-w-[200px] truncate">
                     {isEditing && editingLead?.id === lead.id ? (
                       <Input
                         type="email"
@@ -577,7 +616,7 @@ export default function Home() {
                       lead.email
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="max-w-[200px] truncate">
                     {isEditing && editingLead?.id === lead.id ? (
                       <Input
                         value={editingLead.phone}
@@ -587,7 +626,7 @@ export default function Home() {
                       lead.phone
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="max-w-[200px] truncate">
                     {isEditing && editingLead?.id === lead.id ? (
                       <Input
                         value={editingLead.source}
@@ -620,13 +659,16 @@ export default function Home() {
               ))}
             </TableBody>
           </Table>
-          
-          <div className="flex items-center justify-between px-4 py-4 border-t">
-            <div className="text-sm text-muted-foreground space-y-1">
+        </div>
+
+        <div className="p-4 border-t">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-sm text-muted-foreground order-2 sm:order-1">
               <div>Total de {totalLeads} leads</div>
               <div>Mostrando página {currentPage} de {totalPages}</div>
             </div>
-            <div className="flex items-center space-x-2">
+            
+            <div className="flex items-center gap-2 order-1 sm:order-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -635,20 +677,34 @@ export default function Home() {
               >
                 Anterior
               </Button>
-              <div className="flex items-center space-x-1">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <Button
-                    key={page}
-                    variant={currentPage === page ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handlePageChange(page)}
-                    disabled={isLoading}
-                    className="w-8"
-                  >
-                    {page}
-                  </Button>
+              
+              <div className="hidden sm:flex items-center gap-1">
+                {getPaginationRange(currentPage, totalPages).map((page, index) => (
+                  typeof page === 'number' ? (
+                    <Button
+                      key={index}
+                      variant={currentPage === page ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handlePageChange(page)}
+                      disabled={isLoading}
+                      className="w-8"
+                    >
+                      {page}
+                    </Button>
+                  ) : (
+                    <span key={index} className="px-2">
+                      {page}
+                    </span>
+                  )
                 ))}
               </div>
+              
+              <div className="sm:hidden">
+                <span className="text-sm">
+                  {currentPage} / {totalPages}
+                </span>
+              </div>
+
               <Button
                 variant="outline"
                 size="sm"
@@ -658,7 +714,8 @@ export default function Home() {
                 Próxima
               </Button>
             </div>
-            <div className="text-sm text-muted-foreground">
+
+            <div className="text-sm text-muted-foreground hidden sm:block order-3">
               {isLoading ? (
                 <span>Carregando...</span>
               ) : (
