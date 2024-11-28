@@ -280,7 +280,7 @@ export default function Home() {
   };
 
   return (
-    <div className="p-4 md:p-8">
+    <div className="p-4 md:p-8 space-y-4">
       <div className="rounded-lg border bg-card">
         <div className="p-4 md:p-6 border-b">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -569,7 +569,7 @@ export default function Home() {
             </div>
           </div>
         </div>
-        
+
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -662,13 +662,13 @@ export default function Home() {
         </div>
 
         <div className="p-4 border-t">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="text-sm text-muted-foreground order-2 sm:order-1">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="text-sm text-muted-foreground order-2 md:order-1">
               <div>Total de {totalLeads} leads</div>
-              <div>Mostrando página {currentPage} de {totalPages}</div>
+              <div className="hidden md:block">Mostrando página {currentPage} de {totalPages}</div>
             </div>
             
-            <div className="flex items-center gap-2 order-1 sm:order-2">
+            <div className="flex items-center gap-2 order-1 md:order-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -678,7 +678,7 @@ export default function Home() {
                 Anterior
               </Button>
               
-              <div className="hidden sm:flex items-center gap-1">
+              <div className="hidden md:flex items-center gap-1">
                 {getPaginationRange(currentPage, totalPages).map((page, index) => (
                   typeof page === 'number' ? (
                     <Button
@@ -699,8 +699,8 @@ export default function Home() {
                 ))}
               </div>
               
-              <div className="sm:hidden">
-                <span className="text-sm">
+              <div className="md:hidden">
+                <span className="text-sm px-2">
                   {currentPage} / {totalPages}
                 </span>
               </div>
@@ -713,14 +713,6 @@ export default function Home() {
               >
                 Próxima
               </Button>
-            </div>
-
-            <div className="text-sm text-muted-foreground hidden sm:block order-3">
-              {isLoading ? (
-                <span>Carregando...</span>
-              ) : (
-                <span>{pageSize} leads por página</span>
-              )}
             </div>
           </div>
         </div>

@@ -1,49 +1,31 @@
-import type { Metadata } from "next";
-import localFont from "next/font/local";
-import "./globals.css";
+import '@/app/globals.css'
 import { ThemeProvider } from "@/providers/theme-provider"
-import { Sidebar } from "@/components/sidebar"
-
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
-});
-
-export const metadata: Metadata = {
-  title: "Lead Dashboard",
-  description: "Dashboard para gerenciamento de leads",
-};
+import { NavMenu } from "@/components/nav-menu"
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: {
+  children: React.ReactNode
+}) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className="min-h-screen">
         <ThemeProvider
           attribute="class"
-          defaultTheme="dark"
+          defaultTheme="system"
           enableSystem
           disableTransitionOnChange
         >
           <div className="flex min-h-screen">
-            <Sidebar />
-            <main className="flex-1 pl-64">
-              {children}
-            </main>
+            <NavMenu />
+            <div className="flex-1 flex flex-col min-h-screen md:pl-64">
+              <div className="flex-1">
+                {children}
+              </div>
+            </div>
           </div>
         </ThemeProvider>
       </body>
     </html>
-  );
+  )
 }
