@@ -36,23 +36,15 @@ export async function GET(request: NextRequest) {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { name, email, phone, source } = body
-
-    // Validação básica
-    if (!name || !email || !phone || !source) {
-      return NextResponse.json(
-        { error: 'Todos os campos são obrigatórios' },
-        { status: 400 }
-      )
-    }
-
+    
     const lead = await prisma.lead.create({
       data: {
-        name,
-        email,
-        phone,
-        source
-      }
+        name: body.name,
+        email: body.email,
+        phone: body.phone,
+        source: body.source,
+        status: body.status,
+      },
     })
 
     return NextResponse.json(lead)

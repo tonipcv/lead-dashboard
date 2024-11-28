@@ -14,6 +14,7 @@ model Lead {
   email     String
   phone     String
   source    String
+  status    String   @default("Base")
   createdAt DateTime @default(now())
 }
 

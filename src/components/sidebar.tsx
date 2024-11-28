@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   MessageSquare,
   Settings,
+  LayoutKanban,
 } from "lucide-react"
 
 const sidebarLinks = [
@@ -26,6 +27,11 @@ const sidebarLinks = [
     title: "Configurações",
     href: "/settings",
     icon: Settings,
+  },
+  {
+    title: "CRM",
+    href: "/crm",
+    icon: LayoutKanban,
   },
 ]
 
