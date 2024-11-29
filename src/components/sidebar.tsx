@@ -1,26 +1,21 @@
 "use client"
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { ThemeToggle } from './theme-toggle'
 import { 
   LayoutDashboard,
   ScrollText,
-  Users
+  Users,
+  Rocket
 } from 'lucide-react'
 
 export function Sidebar() {
   return (
     <div className="fixed left-0 top-0 h-full w-64 border-r bg-background p-4">
       <div className="flex flex-col h-full">
-        <div className="mb-8">
-          <Image
-            src="/logo.png"
-            alt="Logo"
-            width={140}
-            height={40}
-            className="object-contain"
-          />
+        <div className="mb-8 flex items-center">
+          <Rocket className="w-8 h-8" />
+          <span className="ml-2 text-xl font-bold">LeadRocket</span>
         </div>
 
         <nav className="space-y-2 flex-1">
