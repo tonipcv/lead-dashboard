@@ -39,6 +39,12 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { Badge } from "@/components/ui/badge"
 import Image from 'next/image'
 
+interface PaginationProps {
+  currentPage: number
+  totalPages: number
+  onPageChange: (page: number) => void
+}
+
 type Lead = {
   id: number
   name: string
@@ -53,6 +59,33 @@ type ColumnMapping = {
   email: string;
   phone: string;
   source: string;
+}
+
+const getPaginationRange = (currentPage: number, totalPages: number) => {
+  const delta = 2
+  const rangeWithDots: (number | string)[] = []
+  let lastNumber: number | undefined
+
+  const range = (start: number, end: number) => {
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i)
+  }
+
+  const rangeStart = Math.max(2, currentPage - delta)
+  const rangeEnd = Math.min(totalPages - 1, currentPage + delta)
+
+  for (const i of range(rangeStart, rangeEnd)) {
+    if (lastNumber) {
+      if (i - lastNumber === 2) {
+        rangeWithDots.push(lastNumber + 1)
+      } else if (i - lastNumber !== 1) {
+        rangeWithDots.push('...')
+      }
+    }
+    rangeWithDots.push(i)
+    lastNumber = i
+  }
+
+  return [1, ...rangeWithDots, totalPages]
 }
 
 export default function Home() {
@@ -273,32 +306,41 @@ export default function Home() {
     fetchLeads()
   }, [currentPage])
 
-  const getPaginationRange = (currentPage: number, totalPages: number) => {
-    const delta = 2; // Número de páginas para mostrar antes e depois da página atual
-    const range: number[] = [];
-    const rangeWithDots: (number | string)[] = [];
-    let l: number;
+  const Pagination = ({ currentPage, totalPages, onPageChange }: PaginationProps) => {
+    return (
+      <div className="flex items-center justify-center space-x-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+        >
+          Anterior
+        </Button>
 
-    for (let i = 1; i <= totalPages; i++) {
-      if (i === 1 || i === totalPages || (i >= currentPage - delta && i <= currentPage + delta)) {
-        range.push(i);
-      }
-    }
+        {getPaginationRange(currentPage, totalPages).map((page, index) => (
+          <Button
+            key={index}
+            variant={currentPage === page ? "default" : "outline"}
+            size="sm"
+            onClick={() => typeof page === 'number' && onPageChange(page)}
+            disabled={typeof page === 'string'}
+          >
+            {page}
+          </Button>
+        ))}
 
-    for (let i of range) {
-      if (l) {
-        if (i - l === 2) {
-          rangeWithDots.push(l + 1);
-        } else if (i - l !== 1) {
-          rangeWithDots.push('...');
-        }
-      }
-      rangeWithDots.push(i);
-      l = i;
-    }
-
-    return rangeWithDots;
-  };
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+        >
+          Próxima
+        </Button>
+      </div>
+    )
+  }
 
   return (
     <div className="p-4 md:p-8 space-y-4">

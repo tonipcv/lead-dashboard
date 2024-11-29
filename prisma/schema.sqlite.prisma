@@ -1,0 +1,26 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "./sqlite-client"
+}
+
+model Lead {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String
+  phone     String
+  source    String
+  status    String   @default("Base")
+  createdAt DateTime @default(now())
+}
+
+model WhatsAppConfig {
+  id        Int      @id @default(autoincrement())
+  status    String   @default("disconnected")
+  qrCode    String?
+  updatedAt DateTime @updatedAt
+} 
