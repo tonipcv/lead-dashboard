@@ -6,7 +6,6 @@ import { ThemeToggle } from './theme-toggle'
 import { 
   LayoutDashboard,
   ScrollText,
-  MessageSquare, 
   Users
 } from 'lucide-react'
 
@@ -39,14 +38,6 @@ export function Sidebar() {
           >
             <Users className="w-5 h-5" />
             <span>Leads</span>
-          </Link>
-          
-          <Link 
-            href="/whatsapp" 
-            className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-accent"
-          >
-            <MessageSquare className="w-5 h-5" />
-            <span>WhatsApp</span>
           </Link>
 
           <Link 
