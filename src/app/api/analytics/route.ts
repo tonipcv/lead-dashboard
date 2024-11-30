@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 
 export async function GET() {
   try {
+    // Teste de conexão com o banco
+    await prisma.$connect()
+    
     const now = new Date()
     
     // Cria cópias independentes da data
@@ -92,10 +96,27 @@ export async function GET() {
       sourceData
     })
   } catch (error) {
-    console.error('Erro ao buscar analytics:', error)
+    console.error('Erro detalhado:', error)
+    
+    if (error instanceof Prisma.PrismaClientInitializationError) {
+      return NextResponse.json(
+        { error: 'Erro de conexão com o banco de dados' },
+        { status: 503 }
+      )
+    }
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      return NextResponse.json(
+        { error: `Erro do Prisma: ${error.code}` },
+        { status: 500 }
+      )
+    }
+
     return NextResponse.json(
-      { error: 'Erro ao buscar dados analíticos' },
+      { error: 'Erro interno do servidor' },
       { status: 500 }
     )
+  } finally {
+    await prisma.$disconnect()
   }
 } 
