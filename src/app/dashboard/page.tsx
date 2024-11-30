@@ -35,11 +35,35 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
+        setLoading(true)
         const response = await fetch('/api/analytics')
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        
         const analyticsData = await response.json()
-        setData(analyticsData)
+        console.log('Dados recebidos:', analyticsData)
+        
+        // Garantir que sourceData é sempre um array
+        const safeData = {
+          ...analyticsData,
+          sourceData: Array.isArray(analyticsData.sourceData) ? analyticsData.sourceData : []
+        }
+        
+        setData(safeData)
       } catch (error) {
         console.error('Erro ao buscar analytics:', error)
+        // Definir dados padrão em caso de erro
+        setData({
+          totalLeads: 0,
+          todayLeads: 0,
+          yesterdayLeads: 0,
+          weekLeads: 0,
+          monthLeads: 0,
+          growthRate: 0,
+          sourceData: []
+        })
       } finally {
         setLoading(false)
       }
@@ -141,7 +165,7 @@ export default function Dashboard() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {data.sourceData.map((stat) => (
+          {data?.sourceData?.map((stat) => (
             <div key={stat.source} className="space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
