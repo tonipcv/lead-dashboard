@@ -4,12 +4,10 @@ import { Prisma } from '@prisma/client'
 
 export async function GET() {
   try {
-    // Teste de conexão com o banco
     await prisma.$connect()
     
     const now = new Date()
     
-    // Cria cópias independentes da data
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0)
     const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
     
@@ -76,46 +74,38 @@ export async function GET() {
       }),
     ])
 
-    const sourceData = sourceStats.map(stat => ({
-      source: stat.source,
-      count: stat._count.source,
-      percentage: (stat._count.source / totalLeads) * 100
-    })).sort((a, b) => b.count - a.count)
+    const sourceData = sourceStats?.map(stat => ({
+      source: stat.source || 'Desconhecido',
+      count: stat._count.source || 0,
+      percentage: totalLeads ? ((stat._count.source || 0) / totalLeads) * 100 : 0
+    })).sort((a, b) => b.count - a.count) || []
 
     const growthRate = yesterdayLeads 
       ? ((todayLeads - yesterdayLeads) / yesterdayLeads) * 100 
       : 0
 
     return NextResponse.json({
-      totalLeads,
-      todayLeads,
-      yesterdayLeads,
-      weekLeads,
-      monthLeads,
-      growthRate,
-      sourceData
+      totalLeads: totalLeads || 0,
+      todayLeads: todayLeads || 0,
+      yesterdayLeads: yesterdayLeads || 0,
+      weekLeads: weekLeads || 0,
+      monthLeads: monthLeads || 0,
+      growthRate: growthRate || 0,
+      sourceData: sourceData || []
     })
   } catch (error) {
     console.error('Erro detalhado:', error)
     
-    if (error instanceof Prisma.PrismaClientInitializationError) {
-      return NextResponse.json(
-        { error: 'Erro de conexão com o banco de dados' },
-        { status: 503 }
-      )
-    }
-
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      return NextResponse.json(
-        { error: `Erro do Prisma: ${error.code}` },
-        { status: 500 }
-      )
-    }
-
-    return NextResponse.json(
-      { error: 'Erro interno do servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({
+      totalLeads: 0,
+      todayLeads: 0,
+      yesterdayLeads: 0,
+      weekLeads: 0,
+      monthLeads: 0,
+      growthRate: 0,
+      sourceData: [],
+      error: 'Erro ao carregar dados'
+    }, { status: 500 })
   } finally {
     await prisma.$disconnect()
   }
