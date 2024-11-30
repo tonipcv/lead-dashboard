@@ -3,17 +3,23 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET() {
   try {
-    const today = new Date()
-    const yesterday = new Date(today)
-    yesterday.setDate(yesterday.getDate() - 1)
+    const now = new Date()
     
-    const lastWeek = new Date(today)
+    // Cria cópias independentes da data
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0)
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
+    
+    const yesterdayStart = new Date(todayStart)
+    yesterdayStart.setDate(yesterdayStart.getDate() - 1)
+    const yesterdayEnd = new Date(todayEnd)
+    yesterdayEnd.setDate(yesterdayEnd.getDate() - 1)
+    
+    const lastWeek = new Date(now)
     lastWeek.setDate(lastWeek.getDate() - 7)
     
-    const lastMonth = new Date(today)
+    const lastMonth = new Date(now)
     lastMonth.setMonth(lastMonth.getMonth() - 1)
 
-    // Busca todos os leads
     const [
       totalLeads,
       todayLeads,
@@ -22,30 +28,26 @@ export async function GET() {
       monthLeads,
       sourceStats
     ] = await Promise.all([
-      // Total de leads
       prisma.lead.count(),
       
-      // Leads de hoje
       prisma.lead.count({
         where: {
           createdAt: {
-            gte: new Date(today.setHours(0, 0, 0, 0)),
-            lt: new Date(today.setHours(23, 59, 59, 999)),
+            gte: todayStart,
+            lte: todayEnd,
           },
         },
       }),
       
-      // Leads de ontem
       prisma.lead.count({
         where: {
           createdAt: {
-            gte: new Date(yesterday.setHours(0, 0, 0, 0)),
-            lt: new Date(yesterday.setHours(23, 59, 59, 999)),
+            gte: yesterdayStart,
+            lte: yesterdayEnd,
           },
         },
       }),
       
-      // Leads da última semana
       prisma.lead.count({
         where: {
           createdAt: {
@@ -54,7 +56,6 @@ export async function GET() {
         },
       }),
       
-      // Leads do último mês
       prisma.lead.count({
         where: {
           createdAt: {
@@ -63,7 +64,6 @@ export async function GET() {
         },
       }),
 
-      // Estatísticas por origem
       prisma.lead.groupBy({
         by: ['source'],
         _count: {
@@ -72,14 +72,12 @@ export async function GET() {
       }),
     ])
 
-    // Calcula as estatísticas por origem
     const sourceData = sourceStats.map(stat => ({
       source: stat.source,
       count: stat._count.source,
       percentage: (stat._count.source / totalLeads) * 100
     })).sort((a, b) => b.count - a.count)
 
-    // Calcula a taxa de crescimento
     const growthRate = yesterdayLeads 
       ? ((todayLeads - yesterdayLeads) / yesterdayLeads) * 100 
       : 0
