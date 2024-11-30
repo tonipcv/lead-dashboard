@@ -176,7 +176,11 @@ export default function Dashboard() {
                   {stat.count} leads
                 </span>
               </div>
-              <Progress value={stat.percentage} className="h-2" />
+              <Progress 
+                value={stat.percentage} 
+                className="h-2 bg-gray-200 dark:bg-gray-700"
+                indicatorClassName="[background-color:#20B2AA] dark:[background-color:#40E0D0]"
+              />
               <p className="text-xs text-muted-foreground">
                 {stat.percentage.toFixed(1)}% do total
               </p>

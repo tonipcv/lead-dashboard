@@ -38,6 +38,7 @@ import {
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Badge } from "@/components/ui/badge"
 import Image from 'next/image'
+import { cn } from "@/lib/utils"
 
 interface PaginationProps {
   currentPage: number
@@ -353,14 +354,14 @@ export default function Home() {
                   placeholder="Buscar leads..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8"
+                  className="pl-8 focus-visible:ring-teal-500"
                 />
                 <Search className="w-4 h-4 absolute left-2.5 top-2.5 text-muted-foreground" />
               </div>
               <div className="flex items-center gap-2">
                 <Dialog open={isImportModalOpen} onOpenChange={setIsImportModalOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="outline" className="flex-1 sm:flex-none">
+                    <Button variant="outline" className="flex-1 sm:flex-none border-teal-500 text-teal-500 hover:bg-teal-50 dark:hover:bg-teal-900/30">
                       <Upload className="w-4 h-4 mr-2" />
                       <span>Importar CSV</span>
                     </Button>
@@ -492,8 +493,8 @@ export default function Home() {
                                       <TableCell>{columnMapping.phone ? row[columnMapping.phone] : '-'}</TableCell>
                                       <TableCell>
                                         {useDefaultSource 
-                                          ? <Badge variant="secondary" className="font-normal">{defaultSource}</Badge>
-                                          : (columnMapping.source ? <Badge variant="secondary" className="font-normal">{row[columnMapping.source]}</Badge> : '-')}
+                                          ? <Badge variant="secondary" className="font-normal bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300">{defaultSource}</Badge>
+                                          : (columnMapping.source ? <Badge variant="secondary" className="font-normal bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300">{row[columnMapping.source]}</Badge> : '-')}
                                       </TableCell>
                                     </TableRow>
                                   ))}
@@ -554,7 +555,7 @@ export default function Home() {
                 </Dialog>
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                   <DialogTrigger asChild>
-                    <Button className="flex-1 sm:flex-none">
+                    <Button className="flex-1 sm:flex-none bg-teal-500 hover:bg-teal-600 text-white">
                       <Plus className="w-4 h-4 mr-2" />
                       <span>Adicionar Lead</span>
                     </Button>
@@ -691,7 +692,7 @@ export default function Home() {
                         placeholder="Digite a origem e pressione Enter"
                       />
                     ) : (
-                      <Badge variant="secondary" className="font-normal">
+                      <Badge variant="secondary" className="font-normal bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300">
                         {lead.source}
                       </Badge>
                     )}
@@ -702,23 +703,23 @@ export default function Home() {
                   <TableCell>
                     {isEditing && editingLead?.id === lead.id ? (
                       <div className="flex space-x-2">
-                        <Button variant="ghost" size="sm" onClick={handleSave}>
+                        <Button variant="ghost" size="sm" className="text-teal-500 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30" onClick={handleSave}>
                           <Save className="w-4 h-4" />
                         </Button>
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          onClick={() => handleDelete(lead.id)}
                           className="text-red-500 hover:text-red-700 hover:bg-red-100"
+                          onClick={() => handleDelete(lead.id)}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={handleCancel}>
+                        <Button variant="ghost" size="sm" className="text-teal-500 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30" onClick={handleCancel}>
                           <X className="w-4 h-4" />
                         </Button>
                       </div>
                     ) : (
-                      <Button variant="ghost" size="sm" onClick={() => handleEdit(lead)}>
+                      <Button variant="ghost" size="sm" className="text-teal-500 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30" onClick={() => handleEdit(lead)}>
                         <Edit2 className="w-4 h-4" />
                       </Button>
                     )}
@@ -755,7 +756,10 @@ export default function Home() {
                       size="sm"
                       onClick={() => handlePageChange(page)}
                       disabled={isLoading}
-                      className="w-8"
+                      className={cn(
+                        "w-8",
+                        currentPage === page && "bg-teal-500 hover:bg-teal-600 text-white"
+                      )}
                     >
                       {page}
                     </Button>
