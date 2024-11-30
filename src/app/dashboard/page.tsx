@@ -124,7 +124,7 @@ export default function Dashboard() {
                 <ArrowDownRight className="h-4 w-4 text-red-500" />
               )}
               <p className="text-xs text-muted-foreground ml-1">
-                Desde ontem ({data.yesterdayLeads} leads)
+                Desde {new Date().toLocaleDateString('pt-BR')} ({data.yesterdayLeads} leads)
               </p>
             </div>
           </CardContent>

@@ -697,7 +697,7 @@ export default function Home() {
                     )}
                   </TableCell>
                   <TableCell>
-                    {new Date(lead.createdAt).toLocaleDateString()}
+                    {new Date(lead.createdAt).toLocaleDateString('pt-BR')}
                   </TableCell>
                   <TableCell>
                     {isEditing && editingLead?.id === lead.id ? (
