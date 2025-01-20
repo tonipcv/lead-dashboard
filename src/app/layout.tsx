@@ -7,8 +7,8 @@ import { Sidebar } from '@/components/sidebar'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Lead Manager',
-  description: 'Gerenciador de Leads',
+  title: 'LeadRocket',
+  description: 'Gestão de Leads',
 }
 
 export default function RootLayout({
@@ -17,7 +17,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="pt-BR" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider
           attribute="class"
@@ -27,7 +27,7 @@ export default function RootLayout({
         >
           <div className="flex">
             <Sidebar />
-            <main className="pl-64 w-full">
+            <main className="flex-1 ml-64">
               {children}
             </main>
           </div>

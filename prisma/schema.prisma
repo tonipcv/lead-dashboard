@@ -23,3 +23,11 @@ model WhatsAppConfig {
   qrCode    String?
   updatedAt DateTime @updatedAt
 }
+
+model InstagramConfig {
+  id            Int      @id @default(autoincrement())
+  status        String   @default("disconnected")
+  accessToken   String?
+  username      String?
+  updatedAt     DateTime @updatedAt
+}
