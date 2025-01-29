@@ -1,15 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { parse } from 'querystring'
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    
-    // O Elementor envia os dados no formato form_fields
-    const formFields = body.form_fields || body
+    const contentType = request.headers.get('content-type') || ''
+    let formFields
+
+    if (contentType.includes('application/json')) {
+      const body = await request.json()
+      formFields = body.form_fields || body
+    } else if (contentType.includes('application/x-www-form-urlencoded')) {
+      const text = await request.text()
+      formFields = parse(text)
+    } else {
+      return NextResponse.json(
+        { error: 'Unsupported content type' },
+        { status: 415 }
+      )
+    }
 
     // Mapeia os campos do formulário do Elementor
-    // Você pode ajustar os IDs (form_fields.field_1) de acordo com seu formulário
     const leadData = {
       name: formFields.field_1 || formFields.name || '',  // campo de nome
       email: formFields.field_2 || formFields.email || '', // campo de email
