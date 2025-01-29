@@ -1,6 +1,8 @@
 import { Card } from "@/components/ui/card"
 
 export default function WebhookPage() {
+  const webhookUrl = "https://lead-dashboard-mauve.vercel.app/api/webhook/lead"
+  
   return (
     <div className="p-8">
       <h1 className="text-3xl font-bold mb-6">Webhook Integration</h1>
@@ -22,7 +24,7 @@ export default function WebhookPage() {
             <div>
               <h3 className="font-medium mb-2">2. URL do Webhook:</h3>
               <code className="bg-secondary p-3 rounded block">
-                {`${process.env.NEXT_PUBLIC_APP_URL}/api/webhook/lead`}
+                {webhookUrl}
               </code>
             </div>
 
@@ -45,17 +47,23 @@ export default function WebhookPage() {
         <Card className="p-6">
           <h2 className="text-xl font-semibold mb-4">Teste Manual</h2>
           <p className="mb-4">
-            Use o comando cURL abaixo para testar a integração manualmente:
+            Copie e cole o comando abaixo no seu terminal para testar a integração:
           </p>
           <pre className="bg-secondary p-3 rounded text-sm overflow-x-auto">
 {`curl -X POST \\
-  ${process.env.NEXT_PUBLIC_APP_URL}/api/webhook/lead \\
+  ${webhookUrl} \\
   -H 'Content-Type: application/json' \\
   -d '{
   "name": "Lead Teste",
   "email": "teste@exemplo.com",
   "phone": "(11) 99999-9999"
 }'`}
+          </pre>
+          <p className="text-sm text-muted-foreground mt-4">
+            Ou se preferir, use este comando em uma linha só:
+          </p>
+          <pre className="bg-secondary p-3 rounded text-sm overflow-x-auto mt-2">
+{`curl -X POST ${webhookUrl} -H 'Content-Type: application/json' -d '{"name":"Lead Teste","email":"teste@exemplo.com","phone":"(11) 99999-9999"}'`}
           </pre>
         </Card>
 
