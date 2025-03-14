@@ -2,21 +2,21 @@ import { NextResponse } from "next/server"
 import axios from "axios"
 import { prisma } from "@/lib/prisma"
 
-const WHATSAPP_API_VERSION = 'v22.0'
+const WHATSAPP_API_VERSION = 'v18.0'
 const WHATSAPP_API_URL = 'https://graph.facebook.com'
 const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID || "392829143915527"
-const ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN || "EAAKeUEkk590BOyzMowHTXYxRIl7dL61v5nSZAGC1A3Luu8PocFoPTMr8yUJj44Ip2BkF8kXJVa1YxQGW2BYgI2oZBLloTQEhFsVZByZCeOKuBQ5KkupZBEHlcKnhcIVVAN0r5U86blS8aWjBvmfcZCxHtMoC5KWpAv5ZAC6zkaRlfQ7V11NEuK8b7dd5biaoTfvR0VdXc1gkH7IXnmXlu9BEdVK"
+const ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN || "EAAKeUEkk590BO6BZAZBANqeqKQxFNmFjkzjnfHwbpt7uzWBQWvFIDwqTZBQOqRAWg3kZC06Xz0XadxzEqwtQdagq3WFOsCozmYZAJqhcvIoYmdv9PnoLx7mZAf65n41ckZAiJmYW1pENfMUsfW9ZBAoGUhpSs02Bv7OnHmTgu9WSsDkaNR52K1DQ8xjWIZCtRsAEB2NIJIlCzzGSAMeBmEoi9chCCc0Tr1LZARXayJo4uO"
 
 export async function GET() {
   try {
     console.log("🔄 Iniciando sincronização de mensagens do WhatsApp")
     
-    // Get messages directly using the /messages endpoint
+    // Buscar mensagens diretamente do número de telefone
     const messagesResponse = await axios.get(
       `${WHATSAPP_API_URL}/${WHATSAPP_API_VERSION}/${PHONE_NUMBER_ID}/messages`,
       {
         params: {
-          limit: 100 // Limit to 100 most recent messages
+          limit: 100 // Aumentamos o limite para obter mais mensagens
         },
         headers: {
           Authorization: `Bearer ${ACCESS_TOKEN}`,
@@ -24,27 +24,31 @@ export async function GET() {
         }
       }
     )
-
-    const messages = (messagesResponse.data.data || []).map((msg: any) => ({
+    
+    console.log("✅ Mensagens obtidas com sucesso")
+    
+    const messages = messagesResponse.data.data || []
+    console.log(`📥 Total de ${messages.length} mensagens encontradas`)
+    
+    // Processar as mensagens
+    const processedMessages = messages.map((msg: any) => ({
       id: msg.id,
-      from: msg.from || msg.to,
+      from: msg.from,
       to: msg.to,
       text: msg.text?.body || '',
       timestamp: new Date(msg.timestamp),
       isFromMe: msg.from === PHONE_NUMBER_ID
     }))
-
-    console.log(`📥 Recebidas ${messages.length} mensagens da API do WhatsApp`)
-
+    
     // Process each message
     const results = {
-      total: messages.length,
+      total: processedMessages.length,
       saved: 0,
       skipped: 0,
       errors: 0
     }
 
-    for (const message of messages) {
+    for (const message of processedMessages) {
       try {
         // Check if message already exists in database
         const existingMessage = await prisma.whatsAppMessage.findUnique({

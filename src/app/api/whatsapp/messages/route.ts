@@ -1,15 +1,14 @@
 import { NextResponse } from "next/server"
 import axios from "axios"
 
-const WHATSAPP_API_VERSION = 'v22.0'
+const WHATSAPP_API_VERSION = 'v18.0'
 const WHATSAPP_API_URL = 'https://graph.facebook.com'
 const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID || "392829143915527"
 const ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN || "EAAKeUEkk590BO6BZAZBANqeqKQxFNmFjkzjnfHwbpt7uzWBQWvFIDwqTZBQOqRAWg3kZC06Xz0XadxzEqwtQdagq3WFOsCozmYZAJqhcvIoYmdv9PnoLx7mZAf65n41ckZAiJmYW1pENfMUsfW9ZBAoGUhpSs02Bv7OnHmTgu9WSsDkaNR52K1DQ8xjWIZCtRsAEB2NIJIlCzzGSAMeBmEoi9chCCc0Tr1LZARXayJo4uO"
 
 export async function GET() {
   try {
-    // Updated to use the business_profile endpoint instead of conversations
-    // This will get the business profile information
+    // Buscar informações do perfil de negócios
     const profileResponse = await axios.get(
       `${WHATSAPP_API_URL}/${WHATSAPP_API_VERSION}/${PHONE_NUMBER_ID}`,
       {
@@ -20,12 +19,12 @@ export async function GET() {
       }
     )
 
-    // Get messages directly using the /messages endpoint
+    // Buscar mensagens diretamente
     const messagesResponse = await axios.get(
       `${WHATSAPP_API_URL}/${WHATSAPP_API_VERSION}/${PHONE_NUMBER_ID}/messages`,
       {
         params: {
-          limit: 20 // Limit to 20 most recent messages
+          limit: 100 // Aumentamos o limite para obter mais mensagens
         },
         headers: {
           Authorization: `Bearer ${ACCESS_TOKEN}`,
@@ -36,7 +35,7 @@ export async function GET() {
 
     const messages = (messagesResponse.data.data || []).map((msg: any) => ({
       id: msg.id,
-      from: msg.from || msg.to,
+      from: msg.from,
       to: msg.to,
       text: msg.text?.body || '',
       timestamp: msg.timestamp,

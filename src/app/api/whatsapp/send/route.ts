@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import axios from "axios"
 import { prisma } from "@/lib/prisma"
 
-const WHATSAPP_API_VERSION = 'v22.0'
+const WHATSAPP_API_VERSION = 'v18.0'
 const WHATSAPP_API_URL = 'https://graph.facebook.com'
 const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID || "392829143915527"
 const ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN || "EAAKeUEkk590BO6BZAZBANqeqKQxFNmFjkzjnfHwbpt7uzWBQWvFIDwqTZBQOqRAWg3kZC06Xz0XadxzEqwtQdagq3WFOsCozmYZAJqhcvIoYmdv9PnoLx7mZAf65n41ckZAiJmYW1pENfMUsfW9ZBAoGUhpSs02Bv7OnHmTgu9WSsDkaNR52K1DQ8xjWIZCtRsAEB2NIJIlCzzGSAMeBmEoi9chCCc0Tr1LZARXayJo4uO"
