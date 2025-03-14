@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { notFound } from "next/navigation"
-import Link from "next/link"
+import { MessageInput } from "@/components/message-input"
+import { ConversationSidebar } from "@/components/conversation-sidebar"
 
 export const metadata: Metadata = {
   title: "Conversa | LeadManager",
@@ -37,6 +38,35 @@ async function getConversation(leadId: number) {
   return lead
 }
 
+async function getConversations() {
+  try {
+    // Buscar leads que têm mensagens do WhatsApp
+    const leadsWithMessages = await prisma.lead.findMany({
+      where: {
+        whatsappMessages: {
+          some: {}
+        }
+      },
+      include: {
+        whatsappMessages: {
+          orderBy: {
+            timestamp: 'desc'
+          },
+          take: 1
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+    
+    return leadsWithMessages;
+  } catch (error) {
+    console.error("❌ Erro ao buscar conversas:", error);
+    return [];
+  }
+}
+
 export default async function ConversaPage({ params }: ConversaPageProps) {
   const leadId = parseInt(params.leadId)
   
@@ -45,32 +75,33 @@ export default async function ConversaPage({ params }: ConversaPageProps) {
   }
 
   const conversation = await getConversation(leadId)
+  const conversations = await getConversations()
 
   if (!conversation) {
     notFound()
   }
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <Link 
-            href="/conversas" 
-            className="text-sm text-muted-foreground hover:underline mb-2 inline-block"
-          >
-            ← Voltar para conversas
-          </Link>
-          <h1 className="text-2xl font-bold">Conversa com {conversation.name}</h1>
-          <p className="text-muted-foreground">{conversation.phone}</p>
+    <div className="flex h-[calc(100vh-4rem)]">
+      {/* Sidebar de conversas */}
+      <ConversationSidebar conversations={conversations} />
+      
+      {/* Área de conversa */}
+      <div className="flex-1 flex flex-col">
+        {/* Header */}
+        <div className="border-b p-4 flex items-center gap-3">
+          <div className="flex-1">
+            <h1 className="font-semibold text-xl">{conversation.name}</h1>
+            <p className="text-base font-medium text-primary">{conversation.phone}</p>
+          </div>
         </div>
-      </div>
 
-      <div className="bg-background rounded-lg border shadow-sm p-4 max-w-3xl mx-auto">
-        <div className="space-y-4">
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {conversation.whatsappMessages.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">
-              Nenhuma mensagem encontrada
-            </p>
+            <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+              <p>Nenhuma mensagem encontrada</p>
+            </div>
           ) : (
             conversation.whatsappMessages.map((message) => (
               <div 
@@ -97,6 +128,9 @@ export default async function ConversaPage({ params }: ConversaPageProps) {
             ))
           )}
         </div>
+
+        {/* Message Input */}
+        <MessageInput leadId={leadId} />
       </div>
     </div>
   )

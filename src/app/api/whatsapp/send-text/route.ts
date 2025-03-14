@@ -10,17 +10,29 @@ const ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN || "EAAKeUEkk590BOyzMowHT
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { phone, leadId } = body
+    const { leadId, text } = body
 
-    if (!phone || !leadId) {
+    if (!leadId || !text) {
       return NextResponse.json(
-        { error: "Número de telefone e ID do lead são obrigatórios" },
+        { error: "ID do lead e texto da mensagem são obrigatórios" },
         { status: 400 }
       )
     }
 
-    // Remove any non-numeric characters
-    let formattedPhone = phone.replace(/\D/g, '')
+    // Get the lead to find the phone number
+    const lead = await prisma.lead.findUnique({
+      where: { id: leadId }
+    })
+
+    if (!lead) {
+      return NextResponse.json(
+        { error: "Lead não encontrado" },
+        { status: 404 }
+      )
+    }
+
+    // Format the phone number
+    let formattedPhone = lead.phone.replace(/\D/g, '')
     
     // Check if it's an international number (more than 12 digits or starts with country code)
     const isInternational = formattedPhone.length > 12 || /^[1-9][0-9][0-9]/.test(formattedPhone)
@@ -35,17 +47,15 @@ export async function POST(request: Request) {
     // Log the formatted phone for debugging
     console.log('Número formatado:', formattedPhone)
 
+    // Send the message
     const response = await axios.post(
       `${WHATSAPP_API_URL}/${WHATSAPP_API_VERSION}/${PHONE_NUMBER_ID}/messages`,
       {
         messaging_product: "whatsapp",
         to: formattedPhone,
-        type: "template",
-        template: {
-          name: "marco_antecipacao",
-          language: {
-            code: "pt_BR"
-          }
+        type: "text",
+        text: {
+          body: text
         }
       },
       {
@@ -55,12 +65,6 @@ export async function POST(request: Request) {
         },
       }
     )
-
-    // Mark the lead as having received the message
-    await prisma.lead.update({
-      where: { id: leadId },
-      data: { messageSent: true }
-    })
 
     // Log the API response for debugging
     console.log('Resposta da API:', response.data)
@@ -76,7 +80,7 @@ export async function POST(request: Request) {
         data: {
           messageId: messageId,
           sender: PHONE_NUMBER_ID, // Sent from the business account
-          text: "Template: marco_antecipacao", // Template message
+          text: text,
           timestamp: new Date(),
           isFromMe: true, // Message sent by us
           leadId: leadId // Associate with the lead
