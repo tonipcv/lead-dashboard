@@ -15,7 +15,8 @@ import {
   Settings,
   BarChart2,
   Link2,
-  X 
+  X,
+  MessageSquare
 } from 'lucide-react'
 import { cn } from "@/lib/utils"
 import { ThemeToggle } from './theme-toggle'
@@ -30,6 +31,11 @@ const routes = [
     href: '/analytics',
     label: 'Analytics',
     icon: BarChart2
+  },
+  {
+    href: '/conversas',
+    label: 'Conversas',
+    icon: MessageSquare
   },
   {
     href: '/settings',
