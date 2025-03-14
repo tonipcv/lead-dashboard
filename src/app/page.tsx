@@ -33,10 +33,13 @@ import {
   Calendar,
   Search,
   Upload,
-  Trash2
+  Trash2,
+  Loader2,
+  Check
 } from 'lucide-react'
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Badge } from "@/components/ui/badge"
+import { useToast } from "@/components/ui/use-toast"
 import Image from 'next/image'
 import { cn } from "@/lib/utils"
 
@@ -53,6 +56,7 @@ type Lead = {
   phone: string
   source: string
   createdAt: string
+  messageSent: boolean
 }
 
 type ColumnMapping = {
@@ -90,6 +94,7 @@ const getPaginationRange = (currentPage: number, totalPages: number) => {
 }
 
 export default function Home() {
+  const { toast } = useToast()
   const [leads, setLeads] = useState<Lead[]>([])
   const [editingLead, setEditingLead] = useState<Lead | null>(null)
   const [isEditing, setIsEditing] = useState(false)
@@ -119,6 +124,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false)
   const [totalLeads, setTotalLeads] = useState(0)
   const [importResults, setImportResults] = useState<string | null>(null)
+  const [sendingMessage, setSendingMessage] = useState<number | null>(null)
 
   const fetchLeads = async () => {
     try {
@@ -291,6 +297,61 @@ export default function Home() {
       console.error('Erro ao excluir lead:', error);
     }
   };
+
+  const handleSendMessage = async (lead: Lead) => {
+    if (!lead.phone) {
+      toast({
+        title: "Erro",
+        description: "Este lead não possui número de telefone cadastrado.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setSendingMessage(lead.id)
+    try {
+      console.log('Enviando mensagem para:', lead.phone)
+
+      const response = await fetch('/api/whatsapp/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          phone: lead.phone.replace(/\D/g, ''),
+          leadId: lead.id
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || data.details || 'Erro ao enviar mensagem')
+      }
+
+      setLeads(prevLeads => 
+        prevLeads.map(l => 
+          l.id === lead.id 
+            ? { ...l, messageSent: true }
+            : l
+        )
+      )
+
+      toast({
+        title: "Sucesso!",
+        description: "Mensagem enviada com sucesso.",
+      })
+    } catch (error: any) {
+      console.error('Erro ao enviar mensagem:', error)
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive",
+      })
+    } finally {
+      setSendingMessage(null)
+    }
+  }
 
   const filteredLeads = leads.filter((lead) =>
     lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -660,7 +721,10 @@ export default function Home() {
                         onChange={(e) => setEditingLead({ ...editingLead, name: e.target.value })}
                       />
                     ) : (
-                      lead.name
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4 text-gray-500" />
+                        {lead.name}
+                      </div>
                     )}
                   </TableCell>
                   <TableCell className="max-w-[200px] truncate">
@@ -671,7 +735,10 @@ export default function Home() {
                         onChange={(e) => setEditingLead({ ...editingLead, email: e.target.value })}
                       />
                     ) : (
-                      lead.email
+                      <div className="flex items-center gap-2">
+                        <Mail className="w-4 h-4 text-gray-500" />
+                        {lead.email}
+                      </div>
                     )}
                   </TableCell>
                   <TableCell className="max-w-[200px] truncate">
@@ -681,7 +748,10 @@ export default function Home() {
                         onChange={(e) => setEditingLead({ ...editingLead, phone: e.target.value })}
                       />
                     ) : (
-                      lead.phone
+                      <div className="flex items-center gap-2">
+                        <Phone className="w-4 h-4 text-gray-500" />
+                        {lead.phone}
+                      </div>
                     )}
                   </TableCell>
                   <TableCell className="max-w-[200px]">
@@ -692,13 +762,19 @@ export default function Home() {
                         placeholder="Digite a origem e pressione Enter"
                       />
                     ) : (
-                      <Badge variant="secondary" className="font-normal bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300">
-                        {lead.source}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Globe className="w-4 h-4 text-gray-500" />
+                        <Badge variant="secondary" className="font-normal bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300">
+                          {lead.source}
+                        </Badge>
+                      </div>
                     )}
                   </TableCell>
                   <TableCell>
-                    {new Date(lead.createdAt).toLocaleDateString('pt-BR')}
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-gray-500" />
+                      {new Date(lead.createdAt).toLocaleDateString('pt-BR')}
+                    </div>
                   </TableCell>
                   <TableCell>
                     {isEditing && editingLead?.id === lead.id ? (
@@ -719,9 +795,40 @@ export default function Home() {
                         </Button>
                       </div>
                     ) : (
-                      <Button variant="ghost" size="sm" className="text-teal-500 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30" onClick={() => handleEdit(lead)}>
-                        <Edit2 className="w-4 h-4" />
-                      </Button>
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          size="sm"
+                          variant={lead.messageSent ? "default" : "outline"}
+                          onClick={() => handleSendMessage(lead)}
+                          disabled={sendingMessage === lead.id || !lead.phone}
+                          title={!lead.phone ? "Lead sem número de telefone" : lead.messageSent ? "Mensagem já enviada" : "Enviar mensagem"}
+                          className={cn(
+                            lead.messageSent && "bg-green-500 hover:bg-green-600 text-white"
+                          )}
+                        >
+                          {sendingMessage === lead.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : lead.messageSent ? (
+                            <Check className="w-4 h-4" />
+                          ) : (
+                            <MessageSquare className="w-4 h-4" />
+                          )}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleEdit(lead)}
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleDelete(lead.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     )}
                   </TableCell>
                 </TableRow>

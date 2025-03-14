@@ -14,6 +14,7 @@ model Lead {
   phone     String
   source    String
   status    String   @default("Base")
+  messageSent Boolean  @default(false)
   createdAt DateTime @default(now())
 }
 

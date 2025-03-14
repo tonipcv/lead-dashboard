@@ -7,7 +7,9 @@ import {
   ScrollText,
   Users,
   Rocket,
-  Webhook
+  Webhook,
+  MessageSquare,
+  MessagesSquare
 } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { cn } from "@/lib/utils"
@@ -74,6 +76,32 @@ export function Sidebar() {
           >
             <Webhook className="w-5 h-5" />
             <span>Webhook</span>
+          </Link>
+
+          <Link 
+            href="/whatsapp" 
+            className={cn(
+              "flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors",
+              pathname === "/whatsapp"
+                ? "bg-teal-500 text-white hover:bg-teal-600"
+                : "hover:bg-teal-50 hover:text-teal-500 dark:hover:bg-teal-900/30"
+            )}
+          >
+            <MessageSquare className="w-5 h-5" />
+            <span>WhatsApp</span>
+          </Link>
+
+          <Link 
+            href="/chat" 
+            className={cn(
+              "flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors",
+              pathname === "/chat"
+                ? "bg-teal-500 text-white hover:bg-teal-600"
+                : "hover:bg-teal-50 hover:text-teal-500 dark:hover:bg-teal-900/30"
+            )}
+          >
+            <MessagesSquare className="w-5 h-5" />
+            <span>Conversas</span>
           </Link>
         </nav>
 
