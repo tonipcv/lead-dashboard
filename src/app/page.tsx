@@ -42,6 +42,7 @@ import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/components/ui/use-toast"
 import Image from 'next/image'
 import { cn } from "@/lib/utils"
+import { ImportCsvDialog } from "@/components/import-csv-dialog"
 
 interface PaginationProps {
   currentPage: number
@@ -106,30 +107,19 @@ export default function Home() {
     source: ''
   })
   const [searchTerm, setSearchTerm] = useState('')
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false)
-  const [csvPreviewData, setCsvPreviewData] = useState<any[]>([])
-  const [isPreviewMode, setIsPreviewMode] = useState(false)
-  const [csvColumns, setCsvColumns] = useState<string[]>([])
-  const [columnMapping, setColumnMapping] = useState<ColumnMapping>({
-    name: '',
-    email: '',
-    phone: '',
-    source: ''
-  })
-  const [useDefaultSource, setUseDefaultSource] = useState(false)
-  const [defaultSource, setDefaultSource] = useState('')
+  const [sourceFilter, setSourceFilter] = useState<string>('all')
+  const [uniqueSources, setUniqueSources] = useState<string[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [pageSize] = useState(10)
   const [isLoading, setIsLoading] = useState(false)
   const [totalLeads, setTotalLeads] = useState(0)
-  const [importResults, setImportResults] = useState<string | null>(null)
   const [sendingMessage, setSendingMessage] = useState<number | null>(null)
 
   const fetchLeads = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch(`/api/leads?page=${currentPage}&pageSize=${pageSize}`)
+      const response = await fetch(`/api/leads?page=${currentPage}&pageSize=${pageSize}${sourceFilter !== 'all' ? `&source=${encodeURIComponent(sourceFilter)}` : ''}`)
       const data = await response.json()
       setLeads(data.leads)
       setTotalPages(data.totalPages)
@@ -197,107 +187,6 @@ export default function Home() {
     }
   }
 
-  const handleCsvImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-
-      const response = await fetch('/api/leads/preview', {
-        method: 'POST',
-        body: formData,
-      })
-
-      if (response.ok) {
-        const { headers, data } = await response.json()
-        setCsvColumns(headers)
-        setCsvPreviewData(data)
-        setIsPreviewMode(true)
-        
-        const initialMapping: ColumnMapping = {
-          name: headers.find((h: string) => h.toLowerCase().includes('nome') || h.toLowerCase().includes('name')) || '',
-          email: headers.find((h: string) => h.toLowerCase().includes('email')) || '',
-          phone: headers.find((h: string) => 
-            h.toLowerCase().includes('telefone') || 
-            h.toLowerCase().includes('phone') || 
-            h.toLowerCase().includes('tel')
-          ) || '',
-          source: headers.find((h: string) => 
-            h.toLowerCase().includes('origem') || 
-            h.toLowerCase().includes('source') || 
-            h.toLowerCase().includes('fonte')
-          ) || ''
-        }
-        setColumnMapping(initialMapping)
-      } else {
-        console.error('Erro ao processar CSV')
-      }
-    } catch (error) {
-      console.error('Erro ao processar CSV:', error)
-    }
-  }
-
-  const handleConfirmImport = async () => {
-    try {
-      const mappedData = csvPreviewData.map(row => ({
-        name: row[columnMapping.name],
-        email: row[columnMapping.email],
-        phone: row[columnMapping.phone],
-        source: useDefaultSource ? defaultSource : row[columnMapping.source]
-      }))
-
-      const response = await fetch('/api/leads/import', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ leads: mappedData }),
-      })
-
-      const result = await response.json()
-
-      if (response.ok) {
-        setImportResults(result.message)
-        await fetchLeads()
-        setTimeout(() => {
-          setIsImportModalOpen(false)
-          setIsPreviewMode(false)
-          setCsvPreviewData([])
-          setCsvColumns([])
-          setColumnMapping({ name: '', email: '', phone: '', source: '' })
-          setUseDefaultSource(false)
-          setDefaultSource('')
-          setImportResults(null)
-        }, 3000)
-      } else {
-        setImportResults(`Erro: ${result.error}`)
-      }
-    } catch (error) {
-      console.error('Erro ao importar leads:', error)
-      setImportResults('Erro ao importar leads. Tente novamente.')
-    }
-  }
-
-  const handleDelete = async (leadId: number) => {
-    if (!confirm('Tem certeza que deseja excluir este lead?')) return;
-
-    try {
-      const response = await fetch(`/api/leads/${leadId}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        await fetchLeads();
-      } else {
-        console.error('Erro ao excluir lead');
-      }
-    } catch (error) {
-      console.error('Erro ao excluir lead:', error);
-    }
-  };
-
   const handleSendMessage = async (lead: Lead) => {
     if (!lead.phone) {
       toast({
@@ -353,20 +242,64 @@ export default function Home() {
     }
   }
 
-  const filteredLeads = leads.filter((lead) =>
-    lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    lead.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    lead.phone.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    lead.source.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const handleDelete = async (leadId: number) => {
+    if (!confirm('Tem certeza que deseja excluir este lead?')) return;
+
+    try {
+      const response = await fetch(`/api/leads/${leadId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        await fetchLeads();
+      } else {
+        console.error('Erro ao excluir lead');
+      }
+    } catch (error) {
+      console.error('Erro ao excluir lead:', error);
+    }
+  };
+
+  const filteredLeads = leads.filter((lead) => {
+    // Only filter by search term client-side since source filtering is now done server-side
+    return lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      lead.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      lead.phone.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      lead.source.toLowerCase().includes(searchTerm.toLowerCase());
+  })
 
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage)
   }
 
+  // Fetch all sources for the filter dropdown
+  const fetchAllSources = async () => {
+    try {
+      const response = await fetch('/api/leads/sources');
+      const data = await response.json();
+      if (data.sources) {
+        setUniqueSources(data.sources);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar origens:', error);
+    }
+  };
+
+  // Initial load
   useEffect(() => {
-    fetchLeads()
-  }, [currentPage])
+    fetchLeads();
+    fetchAllSources();
+  }, []);
+
+  // Reset to page 1 when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [sourceFilter]);
+
+  // Fetch leads when page or filter changes
+  useEffect(() => {
+    fetchLeads();
+  }, [currentPage, sourceFilter]);
 
   const Pagination = ({ currentPage, totalPages, onPageChange }: PaginationProps) => {
     return (
@@ -419,201 +352,23 @@ export default function Home() {
                 />
                 <Search className="w-4 h-4 absolute left-2.5 top-2.5 text-muted-foreground" />
               </div>
+              
+              <div className="relative w-full sm:w-48">
+                <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  value={sourceFilter}
+                  onChange={(e) => setSourceFilter(e.target.value)}
+                >
+                  <option value="all">Todas as origens</option>
+                  {uniqueSources.map((source) => (
+                    <option key={source} value={source}>{source}</option>
+                  ))}
+                </select>
+                <Globe className="w-4 h-4 absolute right-3 top-3 text-muted-foreground pointer-events-none" />
+              </div>
+              
               <div className="flex items-center gap-2">
-                <Dialog open={isImportModalOpen} onOpenChange={setIsImportModalOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="flex-1 sm:flex-none border-teal-500 text-teal-500 hover:bg-teal-50 dark:hover:bg-teal-900/30">
-                      <Upload className="w-4 h-4 mr-2" />
-                      <span>Importar CSV</span>
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-4xl">
-                    <DialogHeader>
-                      <DialogTitle>Importar Leads via CSV</DialogTitle>
-                    </DialogHeader>
-                    {!isPreviewMode ? (
-                      <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                          <Label htmlFor="csvFile">Arquivo CSV</Label>
-                          <Input
-                            id="csvFile"
-                            type="file"
-                            accept=".csv"
-                            onChange={handleCsvImport}
-                          />
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          <p>O arquivo CSV deve conter colunas que possam ser mapeadas para:</p>
-                          <ul className="list-disc list-inside mt-2">
-                            <li>Nome do Lead</li>
-                            <li>Email do Lead</li>
-                            <li>Telefone do Lead</li>
-                            <li>Origem do Lead</li>
-                          </ul>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-4">
-                            <div className="text-sm font-medium">Mapeamento de Colunas</div>
-                            <div className="grid gap-3">
-                              <div className="grid gap-2">
-                                <Label>Nome do Lead</Label>
-                                <select
-                                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1"
-                                  value={columnMapping.name}
-                                  onChange={(e) => setColumnMapping({ ...columnMapping, name: e.target.value })}
-                                >
-                                  <option value="">Selecione a coluna</option>
-                                  {csvColumns.map((column) => (
-                                    <option key={column} value={column}>{column}</option>
-                                  ))}
-                                </select>
-                              </div>
-                              <div className="grid gap-2">
-                                <Label>Email do Lead</Label>
-                                <select
-                                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1"
-                                  value={columnMapping.email}
-                                  onChange={(e) => setColumnMapping({ ...columnMapping, email: e.target.value })}
-                                >
-                                  <option value="">Selecione a coluna</option>
-                                  {csvColumns.map((column) => (
-                                    <option key={column} value={column}>{column}</option>
-                                  ))}
-                                </select>
-                              </div>
-                              <div className="grid gap-2">
-                                <Label>Telefone do Lead</Label>
-                                <select
-                                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1"
-                                  value={columnMapping.phone}
-                                  onChange={(e) => setColumnMapping({ ...columnMapping, phone: e.target.value })}
-                                >
-                                  <option value="">Selecione a coluna</option>
-                                  {csvColumns.map((column) => (
-                                    <option key={column} value={column}>{column}</option>
-                                  ))}
-                                </select>
-                              </div>
-                              <div className="grid gap-2">
-                                <Label>Origem do Lead</Label>
-                                <div className="space-y-4">
-                                  <div className="flex items-center space-x-2">
-                                    <input
-                                      type="checkbox"
-                                      id="useDefaultSource"
-                                      checked={useDefaultSource}
-                                      onChange={(e) => setUseDefaultSource(e.target.checked)}
-                                      className="rounded border-gray-300"
-                                    />
-                                    <Label htmlFor="useDefaultSource">Usar origem padrão para todos</Label>
-                                  </div>
-                                  {useDefaultSource ? (
-                                    <Input
-                                      placeholder="Digite a origem padrão"
-                                      value={defaultSource}
-                                      onChange={(e) => setDefaultSource(e.target.value)}
-                                    />
-                                  ) : (
-                                    <select
-                                      className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1"
-                                      value={columnMapping.source}
-                                      onChange={(e) => setColumnMapping({ ...columnMapping, source: e.target.value })}
-                                    >
-                                      <option value="">Selecione a coluna</option>
-                                      {csvColumns.map((column) => (
-                                        <option key={column} value={column}>{column}</option>
-                                      ))}
-                                    </select>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="space-y-4">
-                            <div className="text-sm font-medium">
-                              Preview dos dados ({csvPreviewData.length} registros):
-                            </div>
-                            <div className="max-h-[400px] overflow-auto">
-                              <Table>
-                                <TableHeader>
-                                  <TableRow>
-                                    <TableHead>Nome</TableHead>
-                                    <TableHead>Email</TableHead>
-                                    <TableHead>Telefone</TableHead>
-                                    <TableHead>Origem</TableHead>
-                                  </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                  {csvPreviewData.slice(0, 5).map((row, index) => (
-                                    <TableRow key={index}>
-                                      <TableCell>{columnMapping.name ? row[columnMapping.name] : '-'}</TableCell>
-                                      <TableCell>{columnMapping.email ? row[columnMapping.email] : '-'}</TableCell>
-                                      <TableCell>{columnMapping.phone ? row[columnMapping.phone] : '-'}</TableCell>
-                                      <TableCell>
-                                        {useDefaultSource 
-                                          ? <Badge variant="secondary" className="font-normal bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300">{defaultSource}</Badge>
-                                          : (columnMapping.source ? <Badge variant="secondary" className="font-normal bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300">{row[columnMapping.source]}</Badge> : '-')}
-                                      </TableCell>
-                                    </TableRow>
-                                  ))}
-                                </TableBody>
-                              </Table>
-                              {csvPreviewData.length > 5 && (
-                                <div className="text-sm text-muted-foreground mt-2 text-center">
-                                  Mostrando 5 de {csvPreviewData.length} registros
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    {importResults && (
-                      <div className={`p-4 mb-4 rounded-md ${
-                        importResults.startsWith('Erro') 
-                          ? 'bg-red-100 text-red-700' 
-                          : 'bg-green-100 text-green-700'
-                      }`}>
-                        {importResults}
-                      </div>
-                    )}
-                    <div className="flex justify-end space-x-2">
-                      <Button 
-                        variant="outline" 
-                        onClick={() => {
-                          setIsImportModalOpen(false)
-                          setIsPreviewMode(false)
-                          setCsvPreviewData([])
-                          setCsvColumns([])
-                          setColumnMapping({ name: '', email: '', phone: '', source: '' })
-                          setUseDefaultSource(false)
-                          setDefaultSource('')
-                        }}
-                      >
-                        <X className="w-4 h-4 mr-2" />
-                        Cancelar
-                      </Button>
-                      {isPreviewMode && (
-                        <Button 
-                          onClick={handleConfirmImport}
-                          disabled={
-                            !columnMapping.name || 
-                            !columnMapping.email || 
-                            !columnMapping.phone || 
-                            (!useDefaultSource && !columnMapping.source) ||
-                            (useDefaultSource && !defaultSource)
-                          }
-                        >
-                          <Save className="w-4 h-4 mr-2" />
-                          Confirmar Importação
-                        </Button>
-                      )}
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                <ImportCsvDialog onImportComplete={fetchLeads} />
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                   <DialogTrigger asChild>
                     <Button className="flex-1 sm:flex-none bg-teal-500 hover:bg-teal-600 text-white">

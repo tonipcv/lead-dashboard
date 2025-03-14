@@ -6,13 +6,23 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const page = parseInt(searchParams.get('page') || '1')
     const pageSize = parseInt(searchParams.get('pageSize') || '10')
+    const source = searchParams.get('source')
     const skip = (page - 1) * pageSize
 
-    console.log('Buscando leads:', { page, pageSize, skip })
+    console.log('Buscando leads:', { page, pageSize, skip, source })
+
+    // Build where condition based on filters
+    const whereCondition: any = {}
+    if (source) {
+      whereCondition.source = source
+    }
 
     const [total, leads] = await Promise.all([
-      prisma.lead.count(),
+      prisma.lead.count({
+        where: whereCondition
+      }),
       prisma.lead.findMany({
+        where: whereCondition,
         skip,
         take: pageSize,
         orderBy: {

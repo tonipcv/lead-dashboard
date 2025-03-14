@@ -4,103 +4,76 @@ import { Prisma } from '@prisma/client'
 
 export async function POST(request: NextRequest) {
   try {
-    const { leads } = await request.json()
-    
-    if (!leads || !Array.isArray(leads)) {
+    const body = await request.json()
+    const { leads } = body
+
+    if (!leads || !Array.isArray(leads) || leads.length === 0) {
       return NextResponse.json(
-        { error: 'Dados inválidos' },
+        { error: "Nenhum lead válido para importação" },
         { status: 400 }
       )
     }
 
-    const results = {
-      success: 0,
-      updated: 0,
-      failed: 0,
-      errors: [] as string[]
-    }
+    // Processar em lotes para evitar sobrecarga do banco de dados
+    const BATCH_SIZE = 100;
+    let importedCount = 0;
+    let duplicateCount = 0;
+    let errorCount = 0;
 
-    // Validar e limpar os dados antes de processar
-    const validLeads = leads.map(lead => ({
-      name: String(lead.name || '').trim(),
-      email: String(lead.email || '').trim().toLowerCase(),
-      phone: String(lead.phone || '').trim(),
-      source: String(lead.source || '').trim()
-    }))
+    // Função para processar um lote
+    const processBatch = async (batch: any[]) => {
+      const results = await Promise.allSettled(
+        batch.map(async (lead) => {
+          try {
+            // Verificar se já existe um lead com este email
+            const existingLead = await prisma.lead.findFirst({
+              where: {
+                email: lead.email
+              }
+            });
 
-    for (const lead of validLeads) {
-      // Validar dados obrigatórios
-      if (!lead.name || !lead.email || !lead.phone || !lead.source) {
-        results.failed++
-        results.errors.push(`Lead com email ${lead.email} possui campos obrigatórios vazios`)
-        continue
-      }
+            if (existingLead) {
+              duplicateCount++;
+              return { status: 'duplicate' };
+            }
 
-      try {
-        // Verificar se o email é válido
-        if (!lead.email.includes('@')) {
-          results.failed++
-          results.errors.push(`Email inválido: ${lead.email}`)
-          continue
-        }
-
-        const existingLead = await prisma.lead.findFirst({
-          where: { email: lead.email }
+            // Criar o lead
+            await prisma.lead.create({
+              data: {
+                name: lead.name || 'Sem nome',
+                email: lead.email || 'sem-email@exemplo.com',
+                phone: lead.phone || '',
+                source: lead.source || 'Importação CSV',
+              }
+            });
+            
+            importedCount++;
+            return { status: 'success' };
+          } catch (error) {
+            errorCount++;
+            console.error('Erro ao importar lead:', error);
+            return { status: 'error', error };
+          }
         })
+      );
 
-        if (existingLead) {
-          // Atualiza o lead existente
-          await prisma.lead.update({
-            where: { id: existingLead.id },
-            data: {
-              name: lead.name,
-              phone: lead.phone,
-              source: lead.source,
-              createdAt: new Date()
-            }
-          })
-          results.updated++
-        } else {
-          // Cria um novo lead
-          await prisma.lead.create({
-            data: {
-              name: lead.name,
-              email: lead.email,
-              phone: lead.phone,
-              source: lead.source
-            }
-          })
-          results.success++
-        }
-      } catch (error) {
-        results.failed++
-        const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido'
-        results.errors.push(`Erro ao processar lead ${lead.email}: ${errorMessage}`)
-      }
-    }
+      return results;
+    };
 
-    // Se todos falharam, retorna erro
-    if (results.failed === leads.length) {
-      return NextResponse.json(
-        { 
-          error: 'Falha ao importar todos os leads',
-          details: results.errors
-        },
-        { status: 400 }
-      )
+    // Processar os lotes
+    for (let i = 0; i < leads.length; i += BATCH_SIZE) {
+      const batch = leads.slice(i, i + BATCH_SIZE);
+      await processBatch(batch);
     }
 
     return NextResponse.json({
-      message: `Importação concluída: ${results.success} leads criados, ${results.updated} atualizados, ${results.failed} falhas`,
-      results
-    })
+      success: true,
+      message: `Importação concluída: ${importedCount} leads importados, ${duplicateCount} duplicados, ${errorCount} erros.`
+    });
   } catch (error) {
     console.error('Erro ao importar leads:', error)
     return NextResponse.json(
-      { 
-        error: 'Erro ao importar leads',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
-      },
+      { error: "Erro ao importar leads" },
       { status: 500 }
     )
   }

@@ -1,11 +1,9 @@
 import NextAuth from "next-auth"
-import { PrismaAdapter } from "@auth/prisma-adapter"
-import { prisma } from "@/lib/prisma"
 import CredentialsProvider from "next-auth/providers/credentials"
+import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 
 export const authOptions = {
-  adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
       name: "credentials",
@@ -14,54 +12,52 @@ export const authOptions = {
         password: { label: "Senha", type: "password" }
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error('Credenciais inválidas')
-        }
-
-        const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email
+        try {
+          if (!credentials) return null;
+          
+          const email = credentials.email as string;
+          const password = credentials.password as string;
+          
+          if (!email || !password) {
+            return null;
           }
-        })
 
-        if (!user || !user.password) {
-          throw new Error('Usuário não encontrado')
-        }
+          const user = await prisma.user.findUnique({
+            where: { email }
+          });
 
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.password
-        )
+          if (!user || !user.password) {
+            return null;
+          }
 
-        if (!isPasswordValid) {
-          throw new Error('Senha incorreta')
-        }
+          const isPasswordValid = await bcrypt.compare(password, user.password);
 
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          image: user.image,
+          if (!isPasswordValid) {
+            return null;
+          }
+
+          return {
+            id: user.id,
+            email: user.email || "",
+            name: user.name || "",
+            image: user.image || null,
+          };
+        } catch (error) {
+          console.error("Auth error:", error);
+          return null;
         }
       }
     })
   ],
-  session: {
-    strategy: "jwt"
-  },
-  secret: process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: '/login',
   },
-  callbacks: {
-    async session({ session, token }) {
-      if (token && session.user) {
-        session.user.id = token.sub
-      }
-      return session
-    }
-  }
+  session: {
+    strategy: "jwt" as const,
+  },
+  secret: process.env.NEXTAUTH_SECRET,
 }
 
 const handler = NextAuth(authOptions)
+
 export { handler as GET, handler as POST } 

@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma"
 const WHATSAPP_API_VERSION = 'v22.0'
 const WHATSAPP_API_URL = 'https://graph.facebook.com'
 const PHONE_NUMBER_ID = "392829143915527"
-const ACCESS_TOKEN = "EAAKeUEkk590BO51IBeXUMDJS9D3wBR6EaOPhO6enUGnpcO32kn8QmfaLFg8tr8RixA55q6Yapp0z1zkevRodpOkjZC5FtaNUThLZCJw1oef8IpmRDZBEAqVZAZC9mMGsi3OrhX5FARA2oipE9uYq2oqA76Phu1mYZBj0kAYOnDvUB766XynjwZCbhevtxyEBlWIauZBmJ80qKVnbJeNoFF5zYVEZC"
+const ACCESS_TOKEN = "EAAKeUEkk590BOyzMowHTXYxRIl7dL61v5nSZAGC1A3Luu8PocFoPTMr8yUJj44Ip2BkF8kXJVa1YxQGW2BYgI2oZBLloTQEhFsVZByZCeOKuBQ5KkupZBEHlcKnhcIVVAN0r5U86blS8aWjBvmfcZCxHtMoC5KWpAv5ZAC6zkaRlfQ7V11NEuK8b7dd5biaoTfvR0VdXc1gkH7IXnmXlu9BEdVK"
 
 export async function POST(request: Request) {
   try {
