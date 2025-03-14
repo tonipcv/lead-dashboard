@@ -48,6 +48,46 @@ model InstagramConfig {
   updatedAt     DateTime @updatedAt
 }
 
+model InstagramComment {
+  id          Int      @id @default(autoincrement())
+  commentId   String   @unique
+  mediaId     String
+  text        String
+  username    String
+  timestamp   DateTime @default(now())
+  createdAt   DateTime @default(now())
+}
+
+model InstagramMessage {
+  id          Int      @id @default(autoincrement())
+  messageId   String   @unique
+  from        String
+  text        String
+  timestamp   DateTime @default(now())
+  createdAt   DateTime @default(now())
+}
+
+model InstagramMention {
+  id          Int      @id @default(autoincrement())
+  mentionId   String   @unique
+  mediaId     String
+  username    String
+  text        String
+  timestamp   DateTime @default(now())
+  createdAt   DateTime @default(now())
+}
+
+model InstagramStoryInsight {
+  id          Int      @id @default(autoincrement())
+  storyId     String
+  metric      String
+  value       Int
+  timestamp   DateTime @default(now())
+  createdAt   DateTime @default(now())
+  
+  @@unique([storyId, metric])
+}
+
 model Account {
   id                String  @id @default(cuid())
   userId            String

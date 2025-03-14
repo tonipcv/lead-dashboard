@@ -1,6 +1,6 @@
 import { Metadata } from "next"
 import { prisma } from "@/lib/prisma"
-import { MessageSquare, ArrowDownLeft, ArrowUpRight } from "lucide-react"
+import { MessageSquare, ArrowDownLeft, ArrowUpRight, AlertTriangle } from "lucide-react"
 import { ConversationSidebar } from "@/components/conversation-sidebar"
 
 export const metadata: Metadata = {
@@ -131,9 +131,65 @@ async function getMessageStats() {
   }
 }
 
+async function getMessagesWithErrors() {
+  try {
+    // Buscar mensagens sem leadId (órfãs)
+    const orphanMessages = await prisma.whatsAppMessage.findMany({
+      where: {
+        leadId: null
+      },
+      orderBy: {
+        timestamp: 'desc'
+      },
+      take: 10
+    });
+    
+    // Buscar mensagens com texto vazio ou muito curto
+    const emptyMessages = await prisma.whatsAppMessage.findMany({
+      where: {
+        text: {
+          in: ['', ' ']
+        }
+      },
+      orderBy: {
+        timestamp: 'desc'
+      },
+      take: 5
+    });
+    
+    // Buscar mensagens duplicadas (mesmo messageId)
+    const duplicateMessageIds = await prisma.$queryRaw`
+      SELECT "messageId", COUNT(*) as count
+      FROM "WhatsAppMessage"
+      WHERE "messageId" IS NOT NULL
+      GROUP BY "messageId"
+      HAVING COUNT(*) > 1
+      LIMIT 5
+    `;
+    
+    return {
+      orphanMessages,
+      emptyMessages,
+      duplicateMessageIds: Array.isArray(duplicateMessageIds) ? duplicateMessageIds : []
+    };
+  } catch (error) {
+    console.error("❌ Erro ao buscar mensagens com problemas:", error);
+    return {
+      orphanMessages: [],
+      emptyMessages: [],
+      duplicateMessageIds: []
+    };
+  }
+}
+
 export default async function ConversasPage() {
   const conversations = await getConversations()
   const stats = await getMessageStats()
+  const messagesWithErrors = await getMessagesWithErrors()
+  
+  const hasErrors = messagesWithErrors.orphanMessages.length > 0 || 
+                    messagesWithErrors.emptyMessages.length > 0 ||
+                    messagesWithErrors.duplicateMessageIds.length > 0;
 
   return (
     <div className="flex h-[calc(100vh-4rem)]">
@@ -141,7 +197,7 @@ export default async function ConversasPage() {
       <ConversationSidebar conversations={conversations} />
       
       {/* Área principal */}
-      <div className="flex-1 flex flex-col items-center justify-center bg-muted/20">
+      <div className="flex-1 flex flex-col items-center justify-center bg-muted/20 overflow-y-auto">
         <div className="text-center p-6 max-w-md">
           <MessageSquare className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-20" />
           <h2 className="text-2xl font-semibold mb-4">Suas conversas do WhatsApp</h2>
@@ -170,6 +226,64 @@ export default async function ConversasPage() {
               <p className="text-xl font-bold text-primary">{stats.receivedMessages}</p>
             </div>
           </div>
+          
+          {hasErrors && (
+            <div className="mb-6 border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 rounded-lg p-4 text-left">
+              <div className="flex items-center gap-2 mb-3">
+                <AlertTriangle className="h-5 w-5 text-amber-500" />
+                <h3 className="font-medium text-amber-800 dark:text-amber-400">Mensagens com problemas</h3>
+              </div>
+              
+              {messagesWithErrors.orphanMessages.length > 0 && (
+                <div className="mb-3">
+                  <p className="text-sm font-medium text-amber-800 dark:text-amber-400 mb-1">
+                    Mensagens sem lead associado: {messagesWithErrors.orphanMessages.length}
+                  </p>
+                  <div className="max-h-32 overflow-y-auto bg-white dark:bg-black/20 rounded p-2 text-xs">
+                    {messagesWithErrors.orphanMessages.map((msg) => (
+                      <div key={msg.id} className="mb-1 pb-1 border-b border-amber-100 dark:border-amber-900 last:border-0">
+                        <p><span className="font-medium">ID:</span> {msg.id}</p>
+                        <p><span className="font-medium">De:</span> {msg.sender}</p>
+                        <p><span className="font-medium">Texto:</span> {msg.text.substring(0, 50)}{msg.text.length > 50 ? '...' : ''}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {messagesWithErrors.emptyMessages.length > 0 && (
+                <div className="mb-3">
+                  <p className="text-sm font-medium text-amber-800 dark:text-amber-400 mb-1">
+                    Mensagens com texto vazio: {messagesWithErrors.emptyMessages.length}
+                  </p>
+                  <div className="max-h-24 overflow-y-auto bg-white dark:bg-black/20 rounded p-2 text-xs">
+                    {messagesWithErrors.emptyMessages.map((msg) => (
+                      <div key={msg.id} className="mb-1 pb-1 border-b border-amber-100 dark:border-amber-900 last:border-0">
+                        <p><span className="font-medium">ID:</span> {msg.id}</p>
+                        <p><span className="font-medium">Lead:</span> {msg.leadId || 'Nenhum'}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {messagesWithErrors.duplicateMessageIds.length > 0 && (
+                <div>
+                  <p className="text-sm font-medium text-amber-800 dark:text-amber-400 mb-1">
+                    IDs de mensagem duplicados:
+                  </p>
+                  <div className="max-h-24 overflow-y-auto bg-white dark:bg-black/20 rounded p-2 text-xs">
+                    {messagesWithErrors.duplicateMessageIds.map((item: any, index) => (
+                      <div key={index} className="mb-1 pb-1 border-b border-amber-100 dark:border-amber-900 last:border-0">
+                        <p><span className="font-medium">MessageID:</span> {item.messageId}</p>
+                        <p><span className="font-medium">Ocorrências:</span> {item.count}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           
           <p className="text-muted-foreground mb-6">
             Selecione uma conversa na barra lateral para visualizar as mensagens ou sincronize para buscar novas mensagens.
