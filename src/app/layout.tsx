@@ -4,36 +4,52 @@ import './globals.css'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Sidebar } from '@/components/sidebar'
 import { Toaster } from "@/components/ui/toaster"
+import { Providers } from './providers'
+import { headers } from 'next/headers'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'LeadRocket',
-  description: 'Gestão de Leads',
+  title: 'Lead Dashboard',
+  description: 'Dashboard para gerenciamento de leads',
 }
 
-export default function RootLayout({
+async function getIsAuthPage() {
+  const headersList = headers()
+  const pathname = headersList.get('x-pathname') || ''
+  return pathname.startsWith('/login') || pathname.startsWith('/register')
+}
+
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const isAuthPage = await getIsAuthPage()
+
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body className={inter.className}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <div className="flex">
-            <Sidebar />
-            <main className="flex-1 ml-64">
-              {children}
-            </main>
-          </div>
-          <Toaster />
-        </ThemeProvider>
+        <Providers>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            {isAuthPage ? (
+              children
+            ) : (
+              <div className="flex">
+                <Sidebar />
+                <main className="flex-1 ml-64">
+                  {children}
+                </main>
+              </div>
+            )}
+            <Toaster />
+          </ThemeProvider>
+        </Providers>
       </body>
     </html>
   )

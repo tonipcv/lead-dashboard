@@ -22,13 +22,14 @@ export async function POST(request: Request) {
     // Remove any non-numeric characters
     let formattedPhone = phone.replace(/\D/g, '')
     
-    // Handle international format (+55) or just the number
-    if (formattedPhone.startsWith('55')) {
-      // If already has country code, just ensure no plus sign
-      formattedPhone = formattedPhone
-    } else {
-      // If no country code, add it
-      formattedPhone = `55${formattedPhone}`
+    // Check if it's an international number (more than 12 digits or starts with country code)
+    const isInternational = formattedPhone.length > 12 || /^[1-9][0-9][0-9]/.test(formattedPhone)
+    
+    if (!isInternational) {
+      // If it's a Brazilian number and doesn't have country code, add it
+      if (!formattedPhone.startsWith('55')) {
+        formattedPhone = `55${formattedPhone}`
+      }
     }
 
     // Log the formatted phone for debugging
