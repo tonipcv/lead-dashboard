@@ -1,20 +1,22 @@
 import { NextResponse } from 'next/server'
 import { NextRequest } from 'next/server'
-import { getToken } from 'next-auth/jwt'
+import { cookies } from 'next/headers'
 
 export async function middleware(request: NextRequest) {
-  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET })
+  // Check for the session token in cookies
+  const sessionToken = request.cookies.get('next-auth.session-token')?.value
+  
   const isAuthPage = request.nextUrl.pathname.startsWith('/login') || 
                     request.nextUrl.pathname.startsWith('/register')
 
   if (isAuthPage) {
-    if (token) {
+    if (sessionToken) {
       return NextResponse.redirect(new URL('/', request.url))
     }
     return NextResponse.next()
   }
 
-  if (!token) {
+  if (!sessionToken) {
     const loginUrl = new URL('/login', request.url)
     return NextResponse.redirect(loginUrl)
   }

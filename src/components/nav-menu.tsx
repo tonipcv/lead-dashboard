@@ -69,7 +69,7 @@ export function NavMenu() {
                         onClick={() => setOpenSettings(!openSettings)}
                         className={cn(
                           "flex items-center gap-x-2 w-full text-sm font-medium px-3 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors",
-                          pathname.startsWith(route.href) && "bg-accent text-accent-foreground"
+                          pathname && pathname.startsWith(route.href) && "bg-accent text-accent-foreground"
                         )}
                       >
                         <Icon className="w-5 h-5" />
@@ -143,7 +143,7 @@ export function NavMenu() {
                             onClick={() => setOpenSettings(!openSettings)}
                             className={cn(
                               "flex items-center gap-x-2 w-full text-sm font-medium p-3 rounded-lg hover:bg-accent hover:text-accent-foreground transition-colors",
-                              pathname.startsWith(route.href) && "bg-accent text-accent-foreground"
+                              pathname && pathname.startsWith(route.href) && "bg-accent text-accent-foreground"
                             )}
                           >
                             <Icon className="w-5 h-5" />
