@@ -6,7 +6,6 @@ import {
   LayoutDashboard,
   ScrollText,
   Users,
-  Rocket,
   Webhook,
   MessageSquare,
   MessagesSquare,
@@ -28,46 +27,27 @@ const menuItems = [
     icon: Users
   },
   {
-    title: 'CRM',
-    href: '/crm',
-    icon: MessageSquare
-  },
-  {
-    title: 'Chat',
-    href: '/chat',
+    title: 'Conversas',
+    href: '/conversas',
     icon: MessagesSquare
-  },
-  {
-    title: 'WhatsApp',
-    href: '/whatsapp',
-    icon: MessageSquare
   },
   {
     title: 'Instagram',
     href: '/instagram',
     icon: Instagram
   },
-  {
-    title: 'Email',
-    href: '/email',
-    icon: Mail
-  },
-  {
-    title: 'Webhook',
-    href: '/webhook',
-    icon: Webhook
-  }
 ]
 
 export function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <div className="fixed left-0 top-0 h-full w-64 border-r bg-background p-4">
+    <div className="fixed left-0 top-0 h-full w-64 border-r bg-white p-4">
       <div className="flex flex-col h-full">
-        <div className="mb-8 flex items-center">
-          <Rocket className="w-8 h-8 text-teal-500" />
-          <span className="ml-2 text-xl font-bold text-teal-500">LeadRocket</span>
+        <div className="mb-8">
+          <Link href="/" className="flex items-center px-4">
+            <span className="text-2xl font-bold tracking-tighter">KTS</span>
+          </Link>
         </div>
 
         <nav className="space-y-2 flex-1">
@@ -80,8 +60,8 @@ export function Sidebar() {
                 className={cn(
                   'flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors',
                   isActive 
-                    ? 'bg-teal-500 text-white hover:bg-teal-600'
-                    : 'hover:bg-teal-50 hover:text-teal-500 dark:hover:bg-teal-900/30'
+                    ? 'bg-black text-white'
+                    : 'text-zinc-600 hover:bg-zinc-100'
                 )}
               >
                 <item.icon className="w-5 h-5" />
@@ -91,7 +71,7 @@ export function Sidebar() {
           })}
         </nav>
 
-        <div className="pt-4 border-t">
+        <div className="pt-4 border-t border-zinc-200">
           <ThemeToggle />
         </div>
       </div>

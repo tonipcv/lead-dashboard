@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import localFont from 'next/font/local'
 import './globals.css'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Sidebar } from '@/components/sidebar'
@@ -7,7 +7,10 @@ import { Toaster } from "@/components/ui/toaster"
 import { Providers } from './providers'
 import { headers } from 'next/headers'
 
-const inter = Inter({ subsets: ['latin'] })
+const satoshi = localFont({
+  src: '../fonts/Satoshi-Variable.woff2',
+  variable: '--font-satoshi',
+})
 
 export const metadata: Metadata = {
   title: 'LeadRocket - Dashboard de Leads',
@@ -58,7 +61,7 @@ export default async function RootLayout({
 
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className={`${satoshi.variable} font-sans tracking-tight`}>
         <Providers>
           <ThemeProvider
             attribute="class"
