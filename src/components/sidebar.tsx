@@ -9,10 +9,55 @@ import {
   Rocket,
   Webhook,
   MessageSquare,
-  MessagesSquare
+  MessagesSquare,
+  Instagram,
+  Mail
 } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { cn } from "@/lib/utils"
+
+const menuItems = [
+  {
+    title: 'Dashboard',
+    href: '/dashboard',
+    icon: LayoutDashboard
+  },
+  {
+    title: 'Leads',
+    href: '/',
+    icon: Users
+  },
+  {
+    title: 'CRM',
+    href: '/crm',
+    icon: MessageSquare
+  },
+  {
+    title: 'Chat',
+    href: '/chat',
+    icon: MessagesSquare
+  },
+  {
+    title: 'WhatsApp',
+    href: '/whatsapp',
+    icon: MessageSquare
+  },
+  {
+    title: 'Instagram',
+    href: '/instagram',
+    icon: Instagram
+  },
+  {
+    title: 'Email',
+    href: '/email',
+    icon: Mail
+  },
+  {
+    title: 'Webhook',
+    href: '/webhook',
+    icon: Webhook
+  }
+]
 
 export function Sidebar() {
   const pathname = usePathname()
@@ -26,83 +71,24 @@ export function Sidebar() {
         </div>
 
         <nav className="space-y-2 flex-1">
-          <Link 
-            href="/dashboard" 
-            className={cn(
-              "flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors",
-              pathname === "/dashboard"
-                ? "bg-teal-500 text-white hover:bg-teal-600"
-                : "hover:bg-teal-50 hover:text-teal-500 dark:hover:bg-teal-900/30"
-            )}
-          >
-            <LayoutDashboard className="w-5 h-5" />
-            <span>Dashboard</span>
-          </Link>
-
-          <Link 
-            href="/" 
-            className={cn(
-              "flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors",
-              pathname === "/"
-                ? "bg-teal-500 text-white hover:bg-teal-600"
-                : "hover:bg-teal-50 hover:text-teal-500 dark:hover:bg-teal-900/30"
-            )}
-          >
-            <Users className="w-5 h-5" />
-            <span>Leads</span>
-          </Link>
-
-          <Link 
-            href="/crm" 
-            className={cn(
-              "flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors",
-              pathname === "/crm"
-                ? "bg-teal-500 text-white hover:bg-teal-600"
-                : "hover:bg-teal-50 hover:text-teal-500 dark:hover:bg-teal-900/30"
-            )}
-          >
-            <ScrollText className="w-5 h-5" />
-            <span>CRM</span>
-          </Link>
-
-          <Link 
-            href="/webhook" 
-            className={cn(
-              "flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors",
-              pathname === "/webhook"
-                ? "bg-teal-500 text-white hover:bg-teal-600"
-                : "hover:bg-teal-50 hover:text-teal-500 dark:hover:bg-teal-900/30"
-            )}
-          >
-            <Webhook className="w-5 h-5" />
-            <span>Webhook</span>
-          </Link>
-
-          <Link 
-            href="/whatsapp" 
-            className={cn(
-              "flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors",
-              pathname === "/whatsapp"
-                ? "bg-teal-500 text-white hover:bg-teal-600"
-                : "hover:bg-teal-50 hover:text-teal-500 dark:hover:bg-teal-900/30"
-            )}
-          >
-            <MessageSquare className="w-5 h-5" />
-            <span>WhatsApp</span>
-          </Link>
-
-          <Link 
-            href="/conversas" 
-            className={cn(
-              "flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors",
-              pathname === "/conversas"
-                ? "bg-teal-500 text-white hover:bg-teal-600"
-                : "hover:bg-teal-50 hover:text-teal-500 dark:hover:bg-teal-900/30"
-            )}
-          >
-            <MessagesSquare className="w-5 h-5" />
-            <span>Conversas</span>
-          </Link>
+          {menuItems.map((item) => {
+            const isActive = pathname === item.href
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  'flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors',
+                  isActive 
+                    ? 'bg-teal-500 text-white hover:bg-teal-600'
+                    : 'hover:bg-teal-50 hover:text-teal-500 dark:hover:bg-teal-900/30'
+                )}
+              >
+                <item.icon className="w-5 h-5" />
+                <span>{item.title}</span>
+              </Link>
+            )
+          })}
         </nav>
 
         <div className="pt-4 border-t">

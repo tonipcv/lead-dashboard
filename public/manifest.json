@@ -1,0 +1,39 @@
+{
+  "name": "LeadRocket",
+  "short_name": "LeadRocket",
+  "description": "Dashboard inteligente para gerenciamento de leads com integrações WhatsApp e Instagram",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#FF4B4B",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "32x32 48x48 72x72 96x96 128x128 256x256",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "orientation": "portrait",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "categories": ["business", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "url": "/dashboard",
+      "description": "Ver dashboard de leads"
+    },
+    {
+      "name": "WhatsApp",
+      "url": "/whatsapp",
+      "description": "Gerenciar conversas do WhatsApp"
+    },
+    {
+      "name": "Instagram",
+      "url": "/instagram",
+      "description": "Gerenciar conexão com Instagram"
+    }
+  ]
+} 

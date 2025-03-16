@@ -1,21 +1,21 @@
-generator client {
-  provider = "prisma-client-js"
-}
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
+generator client {
+  provider = "prisma-client-js"
+}
+
 model Lead {
-  id               Int               @id @default(autoincrement())
-  name             String
-  email            String
-  phone            String
-  source           String
-  status           String            @default("Base")
-  createdAt        DateTime          @default(now())
-  messageSent      Boolean           @default(false)
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String
+  phone     String
+  source    String
+  status    String   @default("Base")
+  messageSent Boolean  @default(false)
+  createdAt DateTime @default(now())
   whatsappMessages WhatsAppMessage[]
 }
 
@@ -26,9 +26,11 @@ model WhatsAppMessage {
   text      String
   timestamp DateTime @default(now())
   isFromMe  Boolean  @default(false)
+  
   leadId    Int?
-  createdAt DateTime @default(now())
   lead      Lead?    @relation(fields: [leadId], references: [id])
+  
+  createdAt DateTime @default(now())
 }
 
 model WhatsAppConfig {
@@ -40,49 +42,49 @@ model WhatsAppConfig {
 
 model InstagramConfig {
   id          Int      @id @default(autoincrement())
-  accessToken String?
   username    String?
-  updatedAt   DateTime @updatedAt
+  accessToken String?  @db.Text
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model InstagramComment {
-  id        Int      @id @default(autoincrement())
-  commentId String   @unique
-  mediaId   String
-  text      String
-  username  String
-  timestamp DateTime @default(now())
-  createdAt DateTime @default(now())
+  id          Int      @id @default(autoincrement())
+  commentId   String   @unique
+  mediaId     String
+  text        String
+  username    String
+  timestamp   DateTime @default(now())
+  createdAt   DateTime @default(now())
 }
 
 model InstagramMessage {
-  id        Int      @id @default(autoincrement())
-  messageId String   @unique
-  from      String
-  text      String
-  timestamp DateTime @default(now())
-  createdAt DateTime @default(now())
+  id          Int      @id @default(autoincrement())
+  messageId   String   @unique
+  from        String
+  text        String
+  timestamp   DateTime @default(now())
+  createdAt   DateTime @default(now())
 }
 
 model InstagramMention {
-  id        Int      @id @default(autoincrement())
-  mentionId String   @unique
-  mediaId   String
-  username  String
-  text      String
-  timestamp DateTime @default(now())
-  createdAt DateTime @default(now())
+  id          Int      @id @default(autoincrement())
+  mentionId   String   @unique
+  mediaId     String
+  username    String
+  text        String
+  timestamp   DateTime @default(now())
+  createdAt   DateTime @default(now())
 }
 
 model InstagramStoryInsight {
-  id        Int      @id @default(autoincrement())
-  storyId   String
-  metric    String
-  value     Int
-  timestamp DateTime @default(now())
-  createdAt DateTime @default(now())
-
+  id          Int      @id @default(autoincrement())
+  storyId     String
+  metric      String
+  value       Int
+  timestamp   DateTime @default(now())
+  createdAt   DateTime @default(now())
+  
   @@unique([storyId, metric])
 }
 
@@ -92,14 +94,15 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String?
-  access_token      String?
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String?
+  id_token          String? @db.Text
   session_state     String?
-  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -132,13 +135,11 @@ model VerificationToken {
 }
 
 model EmailTemplate {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  subject   String
-  text      String?
-  html      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("email_templates")
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  subject     String
+  text        String?  @db.Text
+  html        String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

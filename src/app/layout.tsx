@@ -10,8 +10,37 @@ import { headers } from 'next/headers'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Lead Dashboard',
-  description: 'Dashboard para gerenciamento de leads',
+  title: 'LeadRocket - Dashboard de Leads',
+  description: 'Dashboard inteligente para gerenciamento de leads com integrações WhatsApp e Instagram',
+  icons: {
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+    apple: '/favicon.svg',
+    other: {
+      rel: 'mask-icon',
+      url: '/favicon.svg',
+      color: '#FF4B4B'
+    }
+  },
+  manifest: '/manifest.json',
+  themeColor: '#FF4B4B',
+  viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
+  robots: 'index, follow',
+  openGraph: {
+    type: 'website',
+    locale: 'pt_BR',
+    url: 'https://lead-dashboard-mauve.vercel.app/',
+    title: 'LeadRocket - Dashboard de Leads',
+    description: 'Dashboard inteligente para gerenciamento de leads com integrações WhatsApp e Instagram',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'LeadRocket Dashboard'
+      }
+    ]
+  }
 }
 
 async function getIsAuthPage() {
